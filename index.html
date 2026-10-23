@@ -343,9 +343,7 @@
       cursor: default;
     }
 
-    /* ===================================================
-       ROUND FUEL METER
-       =================================================== */
+    /* Round Fuel Meter */
     .gauge-wrapper {
       display: flex;
       flex-direction: column;
@@ -563,7 +561,7 @@
       transition: color 0.2s;
     }
 
-    /* RED WARNING NOTICE (< 1/4) */
+    /* Low Fuel Notice */
     .fuel-warning-notice {
       display: none;
       width: 100%;
@@ -608,7 +606,7 @@
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
-    /* Checklist Items */
+    /* Checklist */
     .checklist {
       display: flex;
       flex-direction: column;
@@ -708,9 +706,7 @@
       transform: translateY(0);
     }
 
-    /* ===================================================
-       MODERN NON-INTRUSIVE SUCCESS & KEY REMINDER BANNER
-       =================================================== */
+    /* Inline Success Alert */
     .success-alert-card {
       display: none;
       background: #f0fdf4;
@@ -773,7 +769,9 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
-    /* History View & Admin Archive Controls */
+    /* ===================================================
+       ADMIN HISTORY & BATCH ACTIONS TOOLBAR
+       =================================================== */
     .admin-history-toolbar {
       display: none;
       background: #ffffff;
@@ -816,6 +814,7 @@
     .toolbar-actions {
       display: flex;
       gap: 8px;
+      margin-bottom: 10px;
     }
 
     .btn-toolbar {
@@ -839,19 +838,58 @@
     }
 
     .btn-archive {
-      background: #fef2f2;
-      border: 1.5px solid #fca5a5;
-      color: #dc2626;
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      color: var(--primary-dark);
     }
 
+    /* Batch Selection Bar (Admin Mode) */
+    .admin-batch-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 6px;
+    }
+
+    .btn-batch-delete {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s;
+    }
+
+    .btn-batch-delete:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    /* History Cards */
     .history-card {
       background: white;
       border-radius: var(--radius-lg);
       padding: 16px 18px;
       margin-bottom: 12px;
-      border: 1px solid var(--border);
+      border: 1.5px solid var(--border);
       box-shadow: var(--shadow-sm);
       position: relative;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .history-card.selected-for-delete {
+      border-color: #ef4444;
+      background-color: #fef2f2;
     }
 
     .history-top-row {
@@ -870,10 +908,45 @@
       color: #0f172a;
     }
 
+    .history-right-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .history-timestamp {
       font-size: 0.76rem;
       color: #64748b;
       font-weight: 600;
+    }
+
+    /* Admin Delete Trash Icon Button */
+    .admin-del-btn {
+      display: none; /* Only in admin mode */
+      background: #fee2e2;
+      border: none;
+      color: #ef4444;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+
+    .admin-del-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+
+    .admin-card-checkbox {
+      display: none; /* Only in admin mode */
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #ef4444;
     }
 
     .history-driver {
@@ -1271,7 +1344,7 @@
       <!-- ADMIN TOOLBAR -->
       <div class="admin-history-toolbar" id="adminHistoryToolbar">
         <div class="toolbar-title">
-          <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Archive & Export</span>
+          <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Management Controls</span>
           <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Manager Mode</span>
         </div>
 
@@ -1292,6 +1365,17 @@
           </button>
           <button type="button" class="btn-toolbar btn-archive" onclick="archiveDateRange()">
             <i class="fa-solid fa-box-archive"></i> Archive Range
+          </button>
+        </div>
+
+        <!-- Admin Batch Select & Delete Row -->
+        <div class="admin-batch-bar">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; color: #475569; cursor: pointer;">
+            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" style="width: 17px; height: 17px; accent-color: #ef4444; cursor: pointer;" />
+            Select All
+          </label>
+          <button type="button" class="btn-batch-delete" id="btnBatchDelete" onclick="deleteSelected()" disabled>
+            <i class="fa-solid fa-trash-can"></i> Delete Selected (<span id="selectedCount">0</span>)
           </button>
         </div>
       </div>
@@ -1483,6 +1567,12 @@
       }
     }
 
+    function saveRecords(list) {
+      localStorage.setItem('fleet_checkins_v3', JSON.stringify(list));
+      updateBadge();
+      renderHistory();
+    }
+
     function updateBadge() {
       const records = getStoredRecords();
       document.getElementById('historyCount').textContent = records.length;
@@ -1500,18 +1590,33 @@
             <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins appear here sorted by date.</p>
           </div>
         `;
+        syncBatchDeleteState();
         return;
       }
 
       listEl.innerHTML = records.map(r => `
-        <div class="history-card" data-time="${r.timestampMs}">
+        <div class="history-card" id="card-${r.id}" data-id="${r.id}" data-time="${r.timestampMs}">
           <div class="history-top-row">
-            <span class="history-veh-badge">
-              <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
-              ${r.vehicle}
-            </span>
-            <span class="history-timestamp">${r.dateString}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${isAdmin ? `
+                <input type="checkbox" class="admin-card-checkbox" value="${r.id}" onchange="updateSelectedCount()" style="display: inline-block;" />
+              ` : ''}
+              <span class="history-veh-badge">
+                <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
+                ${r.vehicle}
+              </span>
+            </div>
+
+            <div class="history-right-meta">
+              <span class="history-timestamp">${r.dateString}</span>
+              ${isAdmin ? `
+                <button type="button" class="admin-del-btn" onclick="deleteSingleRecord(${r.id})" title="Delete record" style="display: inline-flex;">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : ''}
+            </div>
           </div>
+
           <div class="history-driver">
             <i class="fa-solid fa-user" style="color: #94a3b8; font-size: 0.8rem; margin-right: 4px;"></i>
             Driver: <strong>${r.driverName}</strong>
@@ -1524,9 +1629,73 @@
           ${r.remarks ? `<div class="history-remarks-box"><i class="fa-solid fa-quote-left" style="opacity: 0.6; margin-right: 4px;"></i>${r.remarks}</div>` : ''}
         </div>
       `).join('');
+
+      syncBatchDeleteState();
     }
 
-    // --- 6. Admin Date-Range Archiving & PDF Generation ---
+    // --- 6. Admin Powers: Delete Single, Batch Delete, & Archive ---
+    window.deleteSingleRecord = function(id) {
+      const records = getStoredRecords();
+      const target = records.find(r => r.id === id);
+      if (!target) return;
+
+      if (confirm(`Admin Action: Are you sure you want to permanently delete the check-in record for "${target.driverName}" (${target.vehicle} - ${target.dateString})?`)) {
+        const remaining = records.filter(r => r.id !== id);
+        saveRecords(remaining);
+        showToast('Record deleted by admin.');
+      }
+    };
+
+    window.toggleSelectAll = function(checked) {
+      const checkboxes = document.querySelectorAll('.admin-card-checkbox');
+      checkboxes.forEach(cb => {
+        cb.checked = checked;
+        const card = document.getElementById('card-' + cb.value);
+        if (card) {
+          card.classList.toggle('selected-for-delete', checked);
+        }
+      });
+      updateSelectedCount();
+    };
+
+    window.updateSelectedCount = function() {
+      const checkboxes = document.querySelectorAll('.admin-card-checkbox:checked');
+      const count = checkboxes.length;
+      const countEl = document.getElementById('selectedCount');
+      const deleteBtn = document.getElementById('btnBatchDelete');
+
+      // Update card visual highlights
+      document.querySelectorAll('.admin-card-checkbox').forEach(cb => {
+        const card = document.getElementById('card-' + cb.value);
+        if (card) {
+          card.classList.toggle('selected-for-delete', cb.checked);
+        }
+      });
+
+      if (countEl) countEl.textContent = count;
+      if (deleteBtn) deleteBtn.disabled = count === 0;
+    };
+
+    function syncBatchDeleteState() {
+      const selectAll = document.getElementById('selectAllCheckbox');
+      if (selectAll) selectAll.checked = false;
+      updateSelectedCount();
+    }
+
+    window.deleteSelected = function() {
+      const checkboxes = Array.from(document.querySelectorAll('.admin-card-checkbox:checked'));
+      const idsToDelete = checkboxes.map(cb => parseInt(cb.value, 10));
+
+      if (idsToDelete.length === 0) return;
+
+      if (confirm(`Admin Action: Permanently delete ${idsToDelete.length} selected record(s)? This action cannot be undone.`)) {
+        const records = getStoredRecords();
+        const remaining = records.filter(r => !idsToDelete.includes(r.id));
+        saveRecords(remaining);
+        showToast(`Deleted ${idsToDelete.length} check-in record(s).`);
+      }
+    };
+
     window.archiveDateRange = function() {
       const fromVal = document.getElementById('filterFromDate').value;
       const toVal = document.getElementById('filterToDate').value;
@@ -1557,10 +1726,7 @@
         localStorage.setItem('fleet_archived_records', JSON.stringify(currentArchived.concat(toArchive)));
 
         const remaining = records.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
-        localStorage.setItem('fleet_checkins_v3', JSON.stringify(remaining));
-
-        updateBadge();
-        renderHistory();
+        saveRecords(remaining);
         showToast(`Archived ${toArchive.length} record(s) successfully!`);
       }
     };
@@ -1707,18 +1873,14 @@
 
       const records = getStoredRecords();
       records.unshift(newRecord);
-      localStorage.setItem('fleet_checkins_v3', JSON.stringify(records));
+      saveRecords(records);
 
-      updateBadge();
-
-      // Show seamless notification message with key reminder
       successTitle.textContent = `Check-In Completed (${driverName})!`;
       successAlertCard.classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       showToast(`Check-in recorded for ${driverName}!`);
 
-      // Reset form
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
