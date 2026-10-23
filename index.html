@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Vehicle Check-In</title>
   
   <!-- Fonts & Icons -->
@@ -11,6 +14,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+  <!-- jsPDF & html2canvas for PDF report generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -57,7 +62,7 @@
       margin: 0 auto;
     }
 
-    /* Top Tabs (Form vs History) */
+    /* Top Tabs */
     .nav-tabs {
       display: flex;
       background: #e2e8f0;
@@ -127,6 +132,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .hero-pill {
@@ -144,17 +151,18 @@
       letter-spacing: 0.05em;
     }
 
-    .admin-qr-pill-btn {
-      display: none; /* Only shown if ?admin=true */
+    .admin-pill-badge {
+      display: none;
       align-items: center;
-      gap: 6px;
-      background: rgba(249, 115, 22, 0.25);
-      border: 1px solid rgba(249, 115, 22, 0.5);
+      gap: 5px;
+      background: rgba(234, 88, 12, 0.28);
+      border: 1px solid rgba(249, 115, 22, 0.6);
       color: #fed7aa;
       padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 700;
+      border-radius: 14px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       cursor: pointer;
     }
 
@@ -282,12 +290,6 @@
       margin-bottom: 6px;
     }
 
-    .field-label span.opt {
-      color: #94a3b8;
-      font-weight: 500;
-      font-size: 0.74rem;
-    }
-
     .input-box {
       position: relative;
       display: flex;
@@ -341,7 +343,7 @@
       cursor: default;
     }
 
-    /* Key Returned Pill Options */
+    /* Pill Radios */
     .pill-radio-group {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -382,7 +384,7 @@
     }
 
     /* ===================================================
-       ROUND FUEL METER (AutoMeter Style -> "FUEL METER")
+       ROUND FUEL METER
        =================================================== */
     .gauge-wrapper {
       display: flex;
@@ -746,7 +748,77 @@
       transform: translateY(0);
     }
 
-    /* History View (Read Only & Chronological) */
+    /* History View & Admin Archive Controls */
+    .admin-history-toolbar {
+      display: none; /* Only shown if isAdmin */
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toolbar-title {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .date-filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .filter-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      font-size: 0.82rem;
+      font-family: inherit;
+      color: #1e293b;
+      background: #f8fafc;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-toolbar {
+      flex: 1;
+      height: 42px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-download-pdf {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-archive {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #dc2626;
+    }
+
     .history-card {
       background: white;
       border-radius: var(--radius-lg);
@@ -754,6 +826,7 @@
       margin-bottom: 12px;
       border: 1px solid var(--border);
       box-shadow: var(--shadow-sm);
+      position: relative;
     }
 
     .history-top-row {
@@ -815,11 +888,12 @@
       line-height: 1.4;
     }
 
+    /* History Empty or Locked Note */
     .history-locked-note {
       text-align: center;
-      padding: 12px;
+      padding: 14px;
       color: #94a3b8;
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       font-weight: 600;
       display: flex;
       align-items: center;
@@ -921,7 +995,7 @@
       color: var(--success);
     }
 
-    /* Print styles for QR poster */
+    /* Print styles */
     @media print {
       body * { visibility: hidden; }
       .admin-modal-card, .admin-modal-card * { visibility: visible; }
@@ -959,8 +1033,8 @@
           <i class="fa-solid fa-shield-halved"></i> Return Checklist
         </div>
 
-        <!-- Hidden from normal QR scanners: only visible if admin opened with ?admin=true -->
-        <button type="button" class="admin-qr-pill-btn" id="adminQrBtn" onclick="openAdminQrModal()">
+        <!-- Only visible when opened with ?admin=true -->
+        <button type="button" class="admin-pill-badge" id="adminQrBtn" onclick="openAdminQrModal()">
           <i class="fa-solid fa-qrcode"></i> Admin QR
         </button>
 
@@ -1029,7 +1103,7 @@
             </div>
           </div>
 
-          <!-- Key Return Check (Added value for fleet safety) -->
+          <!-- Key Return Check -->
           <div class="form-group" style="margin-top: 14px;">
             <label class="field-label">Vehicle Key Returned To</label>
             <div class="pill-radio-group">
@@ -1058,11 +1132,9 @@
           <div class="gauge-wrapper">
             <div class="round-gauge">
               <div class="gauge-face">
-                
                 <div class="gauge-upper-black"></div>
                 <div class="gauge-color-arc" id="gaugeColorArc"></div>
 
-                <!-- SVG Markings & Numbers (E, 1/4, 1/2, 3/4, F) -->
                 <svg class="gauge-svg-overlay" viewBox="0 0 230 230">
                   <line x1="56" y1="106" x2="68" y2="108" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
                   <line x1="94" y1="72" x2="100" y2="82" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
@@ -1077,7 +1149,6 @@
                   <text x="180" y="104" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="19">F</text>
                 </svg>
 
-                <!-- Center Gauge Branding: FUEL METER -->
                 <div class="gauge-branding">
                   FUEL LEVEL
                   <span>FUEL METER</span>
@@ -1160,7 +1231,7 @@
         <!-- 5. Remarks / Notes Section -->
         <div class="card">
           <div class="card-title">
-            <i class="fa-solid fa-comment-dots"></i> 5. Remarks & Vehicle Condition <span class="opt" style="font-size:0.75rem; color:#94a3b8; font-weight:600;">(Optional)</span>
+            <i class="fa-solid fa-comment-dots"></i> 5. Remarks & Vehicle Condition <span style="font-size:0.75rem; color:#94a3b8; font-weight:600;">(Optional)</span>
           </div>
           <div class="form-group">
             <label class="field-label" for="remarks">Any issues, maintenance needed, scratches, or notes?</label>
@@ -1181,7 +1252,40 @@
 
     <!-- VIEW 2: LOGGED HISTORY -->
     <div id="historyView" style="display: none;">
-      <div id="historyList"></div>
+      
+      <!-- ADMIN CONTROLS (Only visible in ?admin=true) -->
+      <div class="admin-history-toolbar" id="adminHistoryToolbar">
+        <div class="toolbar-title">
+          <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Archive & Export</span>
+          <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Manager Mode</span>
+        </div>
+
+        <div class="date-filter-grid">
+          <div>
+            <label style="font-size: 0.74rem; font-weight: 700; color: #64748b; margin-bottom: 4px; display: block;">From Date:</label>
+            <input type="date" id="filterFromDate" class="filter-input" />
+          </div>
+          <div>
+            <label style="font-size: 0.74rem; font-weight: 700; color: #64748b; margin-bottom: 4px; display: block;">To Date:</label>
+            <input type="date" id="filterToDate" class="filter-input" />
+          </div>
+        </div>
+
+        <div class="toolbar-actions">
+          <button type="button" class="btn-toolbar btn-download-pdf" onclick="downloadHistoryPdf()">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF
+          </button>
+          <button type="button" class="btn-toolbar btn-archive" onclick="archiveDateRange()">
+            <i class="fa-solid fa-box-archive"></i> Archive Range
+          </button>
+        </div>
+      </div>
+
+      <!-- History List (Framed for both screen & PDF output) -->
+      <div id="pdfExportContainer">
+        <div id="historyList"></div>
+      </div>
+
       <div class="history-locked-note">
         <i class="fa-solid fa-lock"></i> All vehicle check-in records are permanently logged & date-sorted.
       </div>
@@ -1189,12 +1293,12 @@
 
   </div>
 
-  <!-- ADMIN QR MODAL (Only opened via ?admin=true or typing secret) -->
+  <!-- ADMIN QR MODAL -->
   <div class="admin-modal-backdrop" id="adminQrModal">
     <div class="admin-modal-card">
       <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">Fleet Check-In QR Code</h3>
       <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">
-        Print and tape this sign to the sun visor or dashboard. When drivers scan it, they see only the check-in form without QR generation options.
+        Print and tape this sign to the sun visor or dashboard. When drivers scan it, they see only the clean check-in form.
       </p>
 
       <div class="qr-frame">
@@ -1215,15 +1319,15 @@
   </div>
 
   <script>
-    // --- 1. Secret Admin QR Detection ---
-    // If user opens URL with ?admin=true, reveal "Admin QR" button
+    // --- 1. Admin Detection (?admin=true) ---
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
     const adminQrBtn = document.getElementById('adminQrBtn');
+    const adminHistoryToolbar = document.getElementById('adminHistoryToolbar');
     const adminQrModal = document.getElementById('adminQrModal');
     const qrCanvas = document.getElementById('qrCanvas');
 
-    // Generate QR pointing to clean customer URL (without ?admin=true)
+    // Clean scan URL for drivers
     const cleanScanUrl = window.location.origin + window.location.pathname;
     const qr = new QRious({
       element: qrCanvas,
@@ -1234,7 +1338,8 @@
     });
 
     if (isAdmin) {
-      adminQrBtn.style.display = 'inline-flex';
+      if (adminQrBtn) adminQrBtn.style.display = 'inline-flex';
+      if (adminHistoryToolbar) adminHistoryToolbar.style.display = 'block';
     }
 
     function openAdminQrModal() {
@@ -1389,7 +1494,7 @@
       }
 
       listEl.innerHTML = records.map(r => `
-        <div class="history-card">
+        <div class="history-card" data-time="${r.timestampMs}">
           <div class="history-top-row">
             <span class="history-veh-badge">
               <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
@@ -1412,7 +1517,135 @@
       `).join('');
     }
 
-    // --- 6. Tab Switching ---
+    // --- 6. Admin Date-Range Archiving & PDF Generation ---
+    window.archiveDateRange = function() {
+      const fromVal = document.getElementById('filterFromDate').value;
+      const toVal = document.getElementById('filterToDate').value;
+
+      if (!fromVal || !toVal) {
+        alert('Please select both a "From Date" and "To Date" to archive records.');
+        return;
+      }
+
+      const fromTime = new Date(fromVal + "T00:00:00").getTime();
+      const toTime = new Date(toVal + "T23:59:59").getTime();
+
+      if (fromTime > toTime) {
+        alert('"From Date" cannot be after "To Date".');
+        return;
+      }
+
+      const records = getStoredRecords();
+      const toArchive = records.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
+
+      if (toArchive.length === 0) {
+        alert('No records found in this selected date range.');
+        return;
+      }
+
+      if (confirm(`Archive ${toArchive.length} record(s) between ${fromVal} and ${toVal}? (Archived records will be exported and stored safely in your archived storage).`)) {
+        // Save to archive storage
+        const currentArchived = JSON.parse(localStorage.getItem('fleet_archived_records') || '[]');
+        localStorage.setItem('fleet_archived_records', JSON.stringify(currentArchived.concat(toArchive)));
+
+        // Remove from active records
+        const remaining = records.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
+        localStorage.setItem('fleet_checkins_v3', JSON.stringify(remaining));
+
+        updateBadge();
+        renderHistory();
+        showToast(`Archived ${toArchive.length} record(s) successfully!`);
+      }
+    };
+
+    window.downloadHistoryPdf = function() {
+      const records = getStoredRecords();
+      if (records.length === 0) {
+        alert('No records available to export.');
+        return;
+      }
+
+      const fromVal = document.getElementById('filterFromDate').value;
+      const toVal = document.getElementById('filterToDate').value;
+
+      let filtered = records;
+      let dateSubtitle = "All Time Log";
+      if (fromVal && toVal) {
+        const fromTime = new Date(fromVal + "T00:00:00").getTime();
+        const toTime = new Date(toVal + "T23:59:59").getTime();
+        filtered = records.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
+        dateSubtitle = `Date Range: ${fromVal} to ${toVal}`;
+      }
+
+      if (filtered.length === 0) {
+        alert('No records found in the selected date range to generate PDF.');
+        return;
+      }
+
+      showToast('Generating framed PDF report...');
+
+      // Build dedicated clean printable frame for PDF
+      const pdfWrapper = document.createElement('div');
+      pdfWrapper.style.padding = '24px';
+      pdfWrapper.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
+      pdfWrapper.style.color = '#0f172a';
+      pdfWrapper.style.background = '#ffffff';
+
+      pdfWrapper.innerHTML = `
+        <div style="border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h1 style="font-size: 20px; margin: 0; color: #0f172a;">Fleet Vehicle Check-In Report</h1>
+            <p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">${dateSubtitle} &bull; Total Entries: ${filtered.length}</p>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #94a3b8;">
+            Generated on ${new Date().toLocaleDateString()}
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+          ${filtered.map(r => `
+            <div style="border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; background: #f8fafc; page-break-inside: avoid;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                <span style="font-weight: 800; font-size: 14px; color: #1e293b;">
+                  ${r.vehicle}
+                </span>
+                <span style="font-size: 11px; color: #64748b; font-weight: 600;">
+                  ${r.dateString}
+                </span>
+              </div>
+              <div style="font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 8px;">
+                Driver: <strong>${r.driverName}</strong>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700;">
+                <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Mileage: ${r.endMileage} mi</span>
+                <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Fuel: ${r.fuelLevel}</span>
+                <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Key: ${r.keyLocation || 'Drop Box'}</span>
+                <span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 6px;">Checklist: Complete</span>
+              </div>
+              ${r.remarks ? `
+                <div style="margin-top: 8px; padding: 6px 10px; background: #ffffff; border-left: 3px solid #f97316; font-size: 11px; color: #475569;">
+                  <strong>Remarks:</strong> ${r.remarks}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Vehicle_CheckIn_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(pdfWrapper).save().then(() => {
+        showToast('PDF downloaded successfully!');
+      });
+    };
+
+    // --- 7. Tab Switching ---
     window.switchTab = function(tab) {
       const formView = document.getElementById('formView');
       const historyView = document.getElementById('historyView');
@@ -1433,7 +1666,7 @@
       }
     };
 
-    // --- 7. Form Submission ---
+    // --- 8. Form Submission ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
