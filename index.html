@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
   <style>
     :root {
@@ -20,18 +21,16 @@
       --danger: #ef4444;
       --danger-bg: #fef2f2;
       --success: #10b981;
-      --bg: #0b0f19;
       --surface: #ffffff;
       --surface-subtle: #f8fafc;
       --border: #e2e8f0;
       --text: #0f172a;
       --text-muted: #64748b;
-      --radius-xl: 24px;
-      --radius-lg: 18px;
-      --radius-md: 14px;
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
       --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
       --shadow-md: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
-      --shadow-glow: 0 12px 32px rgba(37, 99, 235, 0.18);
     }
 
     * {
@@ -145,6 +144,20 @@
       letter-spacing: 0.05em;
     }
 
+    .admin-qr-pill-btn {
+      display: none; /* Only shown if ?admin=true */
+      align-items: center;
+      gap: 6px;
+      background: rgba(249, 115, 22, 0.25);
+      border: 1px solid rgba(249, 115, 22, 0.5);
+      color: #fed7aa;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .hero-date {
       font-size: 0.8rem;
       color: #94a3b8;
@@ -164,7 +177,7 @@
       line-height: 1.4;
     }
 
-    /* Fluid Cards */
+    /* Cards */
     .card {
       background: var(--surface);
       border-radius: var(--radius-xl);
@@ -172,7 +185,6 @@
       margin-bottom: 16px;
       border: 1px solid var(--border);
       box-shadow: var(--shadow-sm);
-      transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .card-title {
@@ -192,7 +204,7 @@
       font-size: 1rem;
     }
 
-    /* Vehicle Selector Buttons */
+    /* Vehicle Selection */
     .vehicle-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -270,6 +282,12 @@
       margin-bottom: 6px;
     }
 
+    .field-label span.opt {
+      color: #94a3b8;
+      font-weight: 500;
+      font-size: 0.74rem;
+    }
+
     .input-box {
       position: relative;
       display: flex;
@@ -297,11 +315,18 @@
       transition: all 0.2s;
     }
 
-    .form-input:focus {
+    .form-input:focus, textarea.form-input:focus {
       outline: none;
       border-color: var(--primary);
       background: #ffffff;
       box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12);
+    }
+
+    textarea.form-input {
+      height: 78px;
+      padding: 12px 14px 12px 42px;
+      resize: none;
+      line-height: 1.4;
     }
 
     .form-input.mono {
@@ -316,8 +341,48 @@
       cursor: default;
     }
 
+    /* Key Returned Pill Options */
+    .pill-radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .pill-radio {
+      position: relative;
+    }
+
+    .pill-radio input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pill-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--surface-subtle);
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pill-radio input:checked + .pill-label {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+
     /* ===================================================
-       ANALOG ROUND AUTO-METER FUEL GAUGE
+       ROUND FUEL METER (AutoMeter Style -> "FUEL METER")
        =================================================== */
     .gauge-wrapper {
       display: flex;
@@ -326,7 +391,6 @@
       padding: 8px 0;
     }
 
-    /* Chrome Bezle Outer Shell */
     .round-gauge {
       width: 250px;
       height: 250px;
@@ -362,7 +426,6 @@
       box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.35);
     }
 
-    /* Upper black dial crescent */
     .gauge-upper-black {
       position: absolute;
       top: 14px;
@@ -375,7 +438,6 @@
       border: 1.5px solid #1e293b;
     }
 
-    /* Colored Dynamic Glow Arc inside Dial */
     .gauge-color-arc {
       position: absolute;
       top: 20px;
@@ -391,7 +453,6 @@
       transition: all 0.2s;
     }
 
-    /* Gauge Markings & Typography */
     .gauge-svg-overlay {
       position: absolute;
       top: 0;
@@ -435,7 +496,6 @@
       letter-spacing: 0.05em;
     }
 
-    /* Needle Pin */
     .gauge-center-cap {
       position: absolute;
       top: 140px;
@@ -450,19 +510,6 @@
       z-index: 5;
     }
 
-    .gauge-center-cap::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 6px;
-      height: 6px;
-      transform: translate(-50%, -50%);
-      background: #0f172a;
-      border-radius: 50%;
-    }
-
-    /* Orange/Red Needle */
     .gauge-needle {
       position: absolute;
       top: 140px;
@@ -478,7 +525,6 @@
       z-index: 4;
     }
 
-    /* Slider Under Gauge */
     .slider-box {
       width: 100%;
       margin-top: 18px;
@@ -512,7 +558,6 @@
       cursor: grabbing;
     }
 
-    /* Quick Tick Marks */
     .gauge-ticks {
       display: flex;
       justify-content: space-between;
@@ -537,7 +582,6 @@
       transform: scale(1.08);
     }
 
-    /* Live Fuel Value Pill */
     .fuel-readout-pill {
       display: inline-flex;
       align-items: center;
@@ -557,7 +601,7 @@
       transition: color 0.2s;
     }
 
-    /* 🚨 MANDATORY RED WARNING NOTICE (< 1/4 Tank) */
+    /* RED WARNING NOTICE (< 1/4) */
     .fuel-warning-notice {
       display: none;
       width: 100%;
@@ -587,7 +631,6 @@
       font-size: 0.95rem;
       font-weight: 800;
       margin-bottom: 2px;
-      letter-spacing: -0.01em;
     }
 
     .warning-content p {
@@ -603,7 +646,7 @@
       100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
-    /* Checklist Section */
+    /* Checklist Items */
     .checklist {
       display: flex;
       flex-direction: column;
@@ -703,7 +746,7 @@
       transform: translateY(0);
     }
 
-    /* Read-Only History View (Protected & Chronologically Sorted) */
+    /* History View (Read Only & Chronological) */
     .history-card {
       background: white;
       border-radius: var(--radius-lg);
@@ -746,6 +789,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      margin-bottom: 8px;
     }
 
     .history-chip {
@@ -760,6 +804,17 @@
       gap: 5px;
     }
 
+    .history-remarks-box {
+      background: #f8fafc;
+      border-left: 3px solid var(--accent);
+      padding: 8px 12px;
+      border-radius: 4px 8px 8px 4px;
+      font-size: 0.82rem;
+      color: #475569;
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
     .history-locked-note {
       text-align: center;
       padding: 12px;
@@ -772,7 +827,74 @@
       gap: 6px;
     }
 
-    /* Toast Notification */
+    /* Secret Admin QR Modal */
+    .admin-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 300;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .admin-modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .admin-modal-card {
+      background: white;
+      border-radius: 24px;
+      padding: 26px 20px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .qr-frame {
+      padding: 14px;
+      background: #f8fafc;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      display: inline-block;
+      margin: 16px 0;
+    }
+
+    .btn-print-qr {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      width: 100%;
+      cursor: pointer;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-close-qr {
+      background: #f1f5f9;
+      border: none;
+      padding: 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      width: 100%;
+      color: #475569;
+      cursor: pointer;
+    }
+
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -798,6 +920,21 @@
     .toast i {
       color: var(--success);
     }
+
+    /* Print styles for QR poster */
+    @media print {
+      body * { visibility: hidden; }
+      .admin-modal-card, .admin-modal-card * { visibility: visible; }
+      .admin-modal-card {
+        position: absolute;
+        left: 50%;
+        top: 25%;
+        transform: translate(-50%, -25%) !important;
+        box-shadow: none;
+        border: 2px solid #000;
+      }
+      .btn-print-qr, .btn-close-qr { display: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -815,12 +952,18 @@
       </button>
     </div>
 
-    <!-- Header Hero Banner (Clean, no QR shown here) -->
+    <!-- Header Hero Banner -->
     <div class="hero-card">
       <div class="hero-top">
         <div class="hero-pill">
           <i class="fa-solid fa-shield-halved"></i> Return Checklist
         </div>
+
+        <!-- Hidden from normal QR scanners: only visible if admin opened with ?admin=true -->
+        <button type="button" class="admin-qr-pill-btn" id="adminQrBtn" onclick="openAdminQrModal()">
+          <i class="fa-solid fa-qrcode"></i> Admin QR
+        </button>
+
         <div class="hero-date" id="heroDateDisplay">Loading...</div>
       </div>
       <h1>Vehicle Check-In</h1>
@@ -856,7 +999,7 @@
           </div>
         </div>
 
-        <!-- 2. Trip & Driver Details (Autofilled Date) -->
+        <!-- 2. Trip & Driver Details -->
         <div class="card">
           <div class="card-title">
             <i class="fa-solid fa-user-clock"></i> 2. Driver & Mileage Details
@@ -885,38 +1028,48 @@
               <input type="number" id="endMileage" class="form-input mono" placeholder="e.g. 142580" required min="0" step="any" />
             </div>
           </div>
+
+          <!-- Key Return Check (Added value for fleet safety) -->
+          <div class="form-group" style="margin-top: 14px;">
+            <label class="field-label">Vehicle Key Returned To</label>
+            <div class="pill-radio-group">
+              <label class="pill-radio">
+                <input type="radio" name="keyLocation" value="Key Drop Box" checked />
+                <div class="pill-label">
+                  <i class="fa-solid fa-box-archive"></i> Key Drop Box
+                </div>
+              </label>
+              <label class="pill-radio">
+                <input type="radio" name="keyLocation" value="Manager / Office" />
+                <div class="pill-label">
+                  <i class="fa-solid fa-user-tie"></i> Handed to Office
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
 
-        <!-- 3. AutoMeter-Style Round Fuel Gauge -->
+        <!-- 3. Fuel Meter (AutoMeter style labeled "FUEL METER") -->
         <div class="card">
           <div class="card-title">
             <i class="fa-solid fa-gas-pump"></i> 3. Fuel Level Gauge
           </div>
 
           <div class="gauge-wrapper">
-            <!-- Round Analog Bezel -->
             <div class="round-gauge">
               <div class="gauge-face">
                 
-                <!-- Black Upper Crescent -->
                 <div class="gauge-upper-black"></div>
                 <div class="gauge-color-arc" id="gaugeColorArc"></div>
 
                 <!-- SVG Markings & Numbers (E, 1/4, 1/2, 3/4, F) -->
                 <svg class="gauge-svg-overlay" viewBox="0 0 230 230">
-                  <!-- Tick Lines -->
-                  <!-- E tick -->
                   <line x1="56" y1="106" x2="68" y2="108" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-                  <!-- 1/4 tick -->
                   <line x1="94" y1="72" x2="100" y2="82" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-                  <!-- 1/2 tick -->
                   <line x1="125" y1="64" x2="125" y2="78" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" />
-                  <!-- 3/4 tick -->
                   <line x1="156" y1="72" x2="150" y2="82" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-                  <!-- F tick -->
                   <line x1="194" y1="106" x2="182" y2="108" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
 
-                  <!-- Text Labels -->
                   <text x="54" y="104" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="19">E</text>
                   <text x="80" y="58" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14">1/4</text>
                   <text x="114" y="50" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="15">1/2</text>
@@ -924,26 +1077,25 @@
                   <text x="180" y="104" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="19">F</text>
                 </svg>
 
-                <!-- Center Gauge Branding -->
+                <!-- Center Gauge Branding: FUEL METER -->
                 <div class="gauge-branding">
                   FUEL LEVEL
-                  <span>AUTO METER</span>
+                  <span>FUEL METER</span>
                 </div>
 
-                <!-- Moving Needle -->
                 <div class="gauge-needle" id="gaugeNeedle"></div>
                 <div class="gauge-center-cap"></div>
 
-                <div class="gauge-sub-brand">Auto Meter</div>
+                <div class="gauge-sub-brand">Fuel Meter</div>
               </div>
             </div>
 
-            <!-- Interactive Touch Slider -->
+            <!-- Touch Slider -->
             <div class="slider-box">
               <input type="range" id="fuelSlider" class="fluid-slider" min="0" max="100" value="50" step="1" />
             </div>
 
-            <!-- Quick Jump Ticks -->
+            <!-- Quick Jumps -->
             <div class="gauge-ticks">
               <span onclick="setFuel(0)">E</span>
               <span onclick="setFuel(0.25)">1/4</span>
@@ -959,7 +1111,7 @@
               <span class="fuel-val" id="fuelText" style="color: #f59e0b;">1/2 Tank (50%)</span>
             </div>
 
-            <!-- 🚨 REQUIRED RED WARNING NOTICE (Appears when slider < 1/4) -->
+            <!-- Low Fuel Warning Notice (< 1/4) -->
             <div class="fuel-warning-notice" id="fuelWarningNotice">
               <div class="warning-icon">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -1005,6 +1157,20 @@
           </div>
         </div>
 
+        <!-- 5. Remarks / Notes Section -->
+        <div class="card">
+          <div class="card-title">
+            <i class="fa-solid fa-comment-dots"></i> 5. Remarks & Vehicle Condition <span class="opt" style="font-size:0.75rem; color:#94a3b8; font-weight:600;">(Optional)</span>
+          </div>
+          <div class="form-group">
+            <label class="field-label" for="remarks">Any issues, maintenance needed, scratches, or notes?</label>
+            <div class="input-box">
+              <i class="fa-solid fa-pen-to-square" style="top: 14px;"></i>
+              <textarea id="remarks" class="form-input" placeholder="e.g. Low tire pressure warning, oil light came on, or All good!"></textarea>
+            </div>
+          </div>
+        </div>
+
         <!-- Submit Button -->
         <button type="submit" class="submit-btn" id="submitBtn">
           <i class="fa-solid fa-paper-plane"></i> Submit Vehicle Return
@@ -1013,7 +1179,7 @@
       </form>
     </div>
 
-    <!-- VIEW 2: LOGGED HISTORY (Permanently Protected & Sorted By Date) -->
+    <!-- VIEW 2: LOGGED HISTORY -->
     <div id="historyView" style="display: none;">
       <div id="historyList"></div>
       <div class="history-locked-note">
@@ -1023,6 +1189,25 @@
 
   </div>
 
+  <!-- ADMIN QR MODAL (Only opened via ?admin=true or typing secret) -->
+  <div class="admin-modal-backdrop" id="adminQrModal">
+    <div class="admin-modal-card">
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">Fleet Check-In QR Code</h3>
+      <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">
+        Print and tape this sign to the sun visor or dashboard. When drivers scan it, they see only the check-in form without QR generation options.
+      </p>
+
+      <div class="qr-frame">
+        <canvas id="qrCanvas"></canvas>
+      </div>
+
+      <button type="button" class="btn-print-qr" onclick="window.print()">
+        <i class="fa-solid fa-print"></i> Print Sign for Vehicle
+      </button>
+      <button type="button" class="btn-close-qr" onclick="closeAdminQrModal()">Close</button>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast">
     <i class="fa-solid fa-circle-check fa-lg"></i>
@@ -1030,7 +1215,41 @@
   </div>
 
   <script>
-    // --- 1. Autofill Current Date & Time ---
+    // --- 1. Secret Admin QR Detection ---
+    // If user opens URL with ?admin=true, reveal "Admin QR" button
+    const urlParams = new URLSearchParams(window.location.search);
+    const isAdmin = urlParams.get('admin') === 'true';
+    const adminQrBtn = document.getElementById('adminQrBtn');
+    const adminQrModal = document.getElementById('adminQrModal');
+    const qrCanvas = document.getElementById('qrCanvas');
+
+    // Generate QR pointing to clean customer URL (without ?admin=true)
+    const cleanScanUrl = window.location.origin + window.location.pathname;
+    const qr = new QRious({
+      element: qrCanvas,
+      value: cleanScanUrl,
+      size: 200,
+      level: 'H',
+      foreground: '#0f172a'
+    });
+
+    if (isAdmin) {
+      adminQrBtn.style.display = 'inline-flex';
+    }
+
+    function openAdminQrModal() {
+      adminQrModal.classList.add('open');
+    }
+
+    function closeAdminQrModal() {
+      adminQrModal.classList.remove('open');
+    }
+
+    adminQrModal.addEventListener('click', (e) => {
+      if (e.target === adminQrModal) closeAdminQrModal();
+    });
+
+    // --- 2. Autofill Date & Time ---
     function updateAutoDate() {
       const now = new Date();
       const options = { 
@@ -1049,10 +1268,9 @@
       if (heroDate) heroDate.textContent = formatted;
     }
     updateAutoDate();
-    // Keep time fresh
     setInterval(updateAutoDate, 30000);
 
-    // --- 2. AutoMeter Gauge & Color Gradient Logic ---
+    // --- 3. Fuel Meter (AutoMeter style labeled "FUEL METER") ---
     const fuelSlider = document.getElementById('fuelSlider');
     const gaugeNeedle = document.getElementById('gaugeNeedle');
     const fuelText = document.getElementById('fuelText');
@@ -1061,25 +1279,19 @@
     const warningNotice = document.getElementById('fuelWarningNotice');
     const tickSpans = document.querySelectorAll('.gauge-ticks span');
 
-    // Needle Angle: E = -65deg, F = +65deg (130deg range)
     function updateGauge(val) {
       val = parseInt(val, 10);
       const angle = -65 + (val / 100) * 130;
       gaugeNeedle.style.transform = `translate(-50%, -86px) rotate(${angle}deg)`;
 
-      // Dynamic Gradient Color calculation (Red -> Yellow -> Green)
-      // val 0: Red (#ef4444)
-      // val 50: Amber (#f59e0b)
-      // val 100: Emerald (#10b981)
+      // Dynamic Gradient Color calculation (Red -> Amber -> Green)
       let r, g, b;
       if (val < 50) {
-        // Red to Yellow
         const ratio = val / 50;
         r = 239;
         g = Math.round(68 + ratio * (158 - 68));
         b = Math.round(68 - ratio * 57);
       } else {
-        // Yellow to Green
         const ratio = (val - 50) / 50;
         r = Math.round(245 - ratio * (245 - 16));
         g = Math.round(158 + ratio * (185 - 158));
@@ -1087,13 +1299,11 @@
       }
       const currentColor = `rgb(${r}, ${g}, ${b})`;
 
-      // Update color arc & readout text
       gaugeColorArc.style.borderTopColor = currentColor;
       gaugeColorArc.style.borderRightColor = currentColor;
       fuelText.style.color = currentColor;
       fuelIcon.style.color = currentColor;
 
-      // Label text
       let label = '';
       if (val === 0) label = 'Empty (0%)';
       else if (val <= 15) label = 'Nearly Empty (' + val + '%)';
@@ -1107,7 +1317,7 @@
 
       fuelText.textContent = label;
 
-      // 🚨 RED WARNING: If slider is below 1/4 (val < 25)
+      // RED WARNING NOTICE (< 1/4)
       if (val < 25) {
         warningNotice.classList.add('visible');
       } else {
@@ -1136,10 +1346,9 @@
       updateGauge(val);
     };
 
-    // Initialize Gauge at 50%
     updateGauge(50);
 
-    // --- 3. Interactive Checkboxes ---
+    // --- 4. Interactive Checkboxes ---
     const checkCards = document.querySelectorAll('.check-card');
     checkCards.forEach(card => {
       const chk = card.querySelector('input[type="checkbox"]');
@@ -1148,11 +1357,10 @@
       });
     });
 
-    // --- 4. Permanent & Date-Sorted History ---
+    // --- 5. Permanent & Date-Sorted History ---
     function getStoredRecords() {
       try {
-        const list = JSON.parse(localStorage.getItem('fleet_checkins_v2') || '[]');
-        // Sort strictly by Date descending (newest first)
+        const list = JSON.parse(localStorage.getItem('fleet_checkins_v3') || '[]');
         list.sort((a, b) => b.timestampMs - a.timestampMs);
         return list;
       } catch {
@@ -1174,7 +1382,7 @@
           <div style="text-align: center; padding: 45px 20px; color: #94a3b8;">
             <i class="fa-solid fa-clipboard-list" style="font-size: 3rem; margin-bottom: 12px; color: #cbd5e1;"></i>
             <p><strong>No check-ins recorded yet</strong></p>
-            <p style="font-size: 0.8rem; margin-top: 4px;">Submissions are stored securely here and sorted chronologically.</p>
+            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins appear here sorted by date.</p>
           </div>
         `;
         return;
@@ -1196,13 +1404,15 @@
           <div class="history-chips">
             <span class="history-chip"><i class="fa-solid fa-gauge-high"></i> ${r.endMileage} mi</span>
             <span class="history-chip"><i class="fa-solid fa-gas-pump"></i> ${r.fuelLevel}</span>
+            <span class="history-chip"><i class="fa-solid fa-key"></i> ${r.keyLocation || 'Drop Box'}</span>
             <span class="history-chip" style="color: #059669; background: #ecfdf5;"><i class="fa-solid fa-check-double"></i> Complete</span>
           </div>
+          ${r.remarks ? `<div class="history-remarks-box"><i class="fa-solid fa-quote-left" style="opacity: 0.6; margin-right: 4px;"></i>${r.remarks}</div>` : ''}
         </div>
       `).join('');
     }
 
-    // --- 5. Tab Switching ---
+    // --- 6. Tab Switching ---
     window.switchTab = function(tab) {
       const formView = document.getElementById('formView');
       const historyView = document.getElementById('historyView');
@@ -1223,7 +1433,7 @@
       }
     };
 
-    // --- 6. Form Submission ---
+    // --- 7. Form Submission ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
@@ -1241,7 +1451,9 @@
       const vehicle = document.querySelector('input[name="vehicle"]:checked').value;
       const driverName = document.getElementById('driverName').value.trim();
       const endMileage = document.getElementById('endMileage').value.trim();
+      const keyLocation = document.querySelector('input[name="keyLocation"]:checked').value;
       const fuelLevel = fuelText.textContent;
+      const remarks = document.getElementById('remarks').value.trim();
 
       const newRecord = {
         id: Date.now(),
@@ -1250,24 +1462,24 @@
         vehicle,
         driverName,
         endMileage,
-        fuelLevel
+        keyLocation,
+        fuelLevel,
+        remarks
       };
 
       const records = getStoredRecords();
       records.unshift(newRecord);
-      localStorage.setItem('fleet_checkins_v2', JSON.stringify(records));
+      localStorage.setItem('fleet_checkins_v3', JSON.stringify(records));
 
       updateBadge();
       showToast(`Check-in recorded for ${driverName}!`);
 
-      // Reset
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
       updateAutoDate();
     });
 
-    // Init
     updateBadge();
   </script>
 </body>
