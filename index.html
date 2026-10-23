@@ -3,28 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Vehicle Return Checklist</title>
+  <title>Vehicle Check-In</title>
   
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
   <style>
     :root {
       --primary: #2563eb;
-      --primary-dark: #1e40af;
+      --primary-dark: #1d4ed8;
       --accent: #f97316;
-      --accent-gradient: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      --accent-hover: #ea580c;
+      --danger: #ef4444;
+      --danger-bg: #fef2f2;
       --success: #10b981;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
+      --bg: #0b0f19;
+      --surface: #ffffff;
+      --surface-subtle: #f8fafc;
+      --border: #e2e8f0;
       --text: #0f172a;
       --text-muted: #64748b;
-      --border: #e2e8f0;
-      --radius: 18px;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 10px 25px -4px rgba(15, 23, 42, 0.08);
+      --shadow-glow: 0 12px 32px rgba(37, 99, 235, 0.18);
     }
 
     * {
@@ -42,20 +49,20 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 14px 12px 40px;
+      padding: 16px 14px 60px;
     }
 
-    .container {
+    .app-wrap {
       width: 100%;
       max-width: 480px;
       margin: 0 auto;
     }
 
-    /* Top Navigation Tabs (Form vs History) */
+    /* Top Tabs (Form vs History) */
     .nav-tabs {
       display: flex;
       background: #e2e8f0;
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 4px;
       margin-bottom: 14px;
       gap: 4px;
@@ -67,125 +74,129 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 10px;
-      font-size: 0.88rem;
+      padding: 11px 12px;
+      font-size: 0.9rem;
       font-weight: 700;
       color: #64748b;
       border: none;
       background: transparent;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .nav-tab.active {
       background: #ffffff;
-      color: var(--text);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      color: #0f172a;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
     .tab-badge {
-      background: #f97316;
+      background: var(--primary);
       color: white;
       font-size: 0.72rem;
-      padding: 2px 7px;
+      padding: 2px 8px;
       border-radius: 12px;
       font-weight: 800;
     }
 
-    /* Hero Banner */
-    .header-card {
+    /* Hero Card */
+    .hero-card {
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: white;
-      border-radius: var(--radius);
-      padding: 22px 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25);
+      color: #ffffff;
+      padding: 22px 20px;
+      border-radius: var(--radius-xl);
+      margin-bottom: 16px;
+      box-shadow: 0 12px 30px -6px rgba(15, 23, 42, 0.25);
       position: relative;
+      overflow: hidden;
     }
 
-    .header-top {
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 130px;
+      height: 130px;
+      background: radial-gradient(circle, rgba(37,99,235,0.35) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .hero-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    .tag-badge {
+    .hero-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       background: rgba(255, 255, 255, 0.12);
-      padding: 5px 12px;
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
       border-radius: 20px;
       font-size: 0.74rem;
       font-weight: 700;
       color: #93c5fd;
-      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
-    .qr-badge-btn {
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #ffffff;
-      border-radius: 10px;
-      padding: 6px 12px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.15s;
+    .hero-date {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-weight: 600;
     }
 
-    .qr-badge-btn:active {
-      transform: scale(0.95);
-    }
-
-    .header-card h1 {
-      font-size: 1.45rem;
+    .hero-card h1 {
+      font-size: 1.5rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       margin-bottom: 4px;
     }
 
-    .header-card p {
-      font-size: 0.84rem;
+    .hero-card p {
+      font-size: 0.86rem;
       color: #94a3b8;
+      line-height: 1.4;
     }
 
-    /* Section Cards */
+    /* Fluid Cards */
     .card {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 18px 16px;
-      margin-bottom: 14px;
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: 20px 18px;
+      margin-bottom: 16px;
       border: 1px solid var(--border);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .card-title {
       font-size: 0.92rem;
       font-weight: 800;
       color: #334155;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
     }
 
     .card-title i {
       color: var(--primary);
+      font-size: 1rem;
     }
 
-    /* Vehicle Options */
+    /* Vehicle Selector Buttons */
     .vehicle-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
     }
 
     .vehicle-card {
@@ -202,10 +213,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px 10px;
-      background: #f8fafc;
+      padding: 16px 12px;
+      background: var(--surface-subtle);
       border: 2px solid var(--border);
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -219,38 +230,39 @@
 
     .vehicle-btn .name {
       font-size: 0.98rem;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text);
     }
 
     .vehicle-btn .desc {
-      font-size: 0.72rem;
+      font-size: 0.74rem;
       color: #64748b;
       margin-top: 2px;
+      font-weight: 600;
     }
 
     .vehicle-card input:checked + .vehicle-btn {
       border-color: var(--primary);
       background: #eff6ff;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
       transform: translateY(-2px);
     }
 
     .vehicle-card input:checked + .vehicle-btn i {
       color: var(--primary);
-      transform: scale(1.08);
+      transform: scale(1.1);
     }
 
-    /* Form Inputs */
+    /* Inputs */
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .form-group:last-child {
       margin-bottom: 0;
     }
 
-    label.field-label {
+    .field-label {
       display: block;
       font-size: 0.8rem;
       font-weight: 700;
@@ -269,17 +281,18 @@
       left: 14px;
       color: #94a3b8;
       font-size: 1rem;
+      pointer-events: none;
     }
 
     .form-input {
       width: 100%;
-      height: 48px;
+      height: 50px;
       padding: 0 14px 0 42px;
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       border: 1.5px solid var(--border);
       font-size: 0.98rem;
       font-family: inherit;
-      background: #f8fafc;
+      background: var(--surface-subtle);
       color: var(--text);
       transition: all 0.2s;
     }
@@ -288,7 +301,7 @@
       outline: none;
       border-color: var(--primary);
       background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.12);
     }
 
     .form-input.mono {
@@ -297,108 +310,300 @@
       letter-spacing: 0.05em;
     }
 
-    /* U-Haul Style Fuel Gauge */
-    .fuel-box {
-      background: #f8fafc;
-      border: 1.5px solid var(--border);
-      border-radius: 14px;
-      padding: 16px 14px;
+    .form-input[readonly] {
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: default;
     }
 
-    .meter-bar {
+    /* ===================================================
+       ANALOG ROUND AUTO-METER FUEL GAUGE
+       =================================================== */
+    .gauge-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    /* Chrome Bezle Outer Shell */
+    .round-gauge {
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        #cfd6df 0deg,
+        #f8fafc 45deg,
+        #94a3b8 90deg,
+        #e2e8f0 135deg,
+        #64748b 180deg,
+        #e2e8f0 225deg,
+        #94a3b8 270deg,
+        #f8fafc 315deg,
+        #cfd6df 360deg
+      );
+      padding: 10px;
+      box-shadow: 
+        0 14px 30px rgba(0, 0, 0, 0.25),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .gauge-face {
       width: 100%;
-      height: 26px;
-      background: #e2e8f0;
-      border-radius: 13px;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, #e2e8f0 75%, #cbd5e1 100%);
       position: relative;
       overflow: hidden;
-      border: 1px solid #cbd5e1;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
+      border: 2px solid #334155;
+      box-shadow: inset 0 8px 18px rgba(0, 0, 0, 0.35);
     }
 
-    .meter-fill {
+    /* Upper black dial crescent */
+    .gauge-upper-black {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      right: 18px;
+      height: 110px;
+      background: #090d16;
+      border-radius: 95px 95px 18px 18px;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.8), 0 2px 4px rgba(255,255,255,0.4);
+      border: 1.5px solid #1e293b;
+    }
+
+    /* Colored Dynamic Glow Arc inside Dial */
+    .gauge-color-arc {
+      position: absolute;
+      top: 20px;
+      left: 28px;
+      right: 28px;
+      height: 96px;
+      border-radius: 80px 80px 0 0;
+      border-top: 6px solid #10b981;
+      border-left: 6px solid #ef4444;
+      border-right: 6px solid #10b981;
+      pointer-events: none;
+      opacity: 0.85;
+      transition: all 0.2s;
+    }
+
+    /* Gauge Markings & Typography */
+    .gauge-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
       height: 100%;
-      width: 50%;
-      background: linear-gradient(90deg, #ef4444 0%, #f59e0b 35%, #10b981 85%);
-      border-radius: 13px 0 0 13px;
-      transition: width 0.12s ease-out;
+      pointer-events: none;
     }
 
-    .ticks {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 8px;
-      padding: 0 4px;
-    }
-
-    .tick {
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: #64748b;
-      cursor: pointer;
-      user-select: none;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-
-    .tick.active {
-      color: var(--primary-dark);
-      background: #e0e7ff;
+    .gauge-branding {
+      position: absolute;
+      top: 102px;
+      width: 100%;
+      text-align: center;
+      font-size: 0.72rem;
       font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      line-height: 1.1;
+      pointer-events: none;
     }
 
-    .slider-wrapper {
-      margin-top: 14px;
+    .gauge-branding span {
+      display: block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #475569;
+      letter-spacing: 0.04em;
     }
 
-    .fuel-range {
+    .gauge-sub-brand {
+      position: absolute;
+      bottom: 22px;
+      width: 100%;
+      text-align: center;
+      font-style: italic;
+      font-weight: 800;
+      font-size: 0.72rem;
+      color: #334155;
+      letter-spacing: 0.05em;
+    }
+
+    /* Needle Pin */
+    .gauge-center-cap {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      width: 32px;
+      height: 32px;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, #334155 30%, #0f172a 90%);
+      border: 2px solid #0f172a;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+      z-index: 5;
+    }
+
+    .gauge-center-cap::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      transform: translate(-50%, -50%);
+      background: #0f172a;
+      border-radius: 50%;
+    }
+
+    /* Orange/Red Needle */
+    .gauge-needle {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      width: 4.5px;
+      height: 96px;
+      background: linear-gradient(to top, #ea580c 0%, #ef4444 60%, #ff6b6b 100%);
+      transform-origin: 50% 86px;
+      transform: translate(-50%, -86px) rotate(-65deg);
+      border-radius: 3px 3px 0 0;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+      transition: transform 0.2s cubic-bezier(0.34, 1.3, 0.64, 1);
+      z-index: 4;
+    }
+
+    /* Slider Under Gauge */
+    .slider-box {
+      width: 100%;
+      margin-top: 18px;
+    }
+
+    .fluid-slider {
       -webkit-appearance: none;
       width: 100%;
-      height: 10px;
-      border-radius: 5px;
-      background: #cbd5e1;
+      height: 12px;
+      border-radius: 6px;
+      background: linear-gradient(90deg, #ef4444 0%, #f59e0b 35%, #10b981 80%, #059669 100%);
       outline: none;
       cursor: pointer;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
-    .fuel-range::-webkit-slider-thumb {
+    .fluid-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
-      appearance: none;
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: #ffffff;
-      border: 3px solid var(--accent);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      border: 3.5px solid #0f172a;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       cursor: grab;
       transition: transform 0.1s;
     }
 
-    .fuel-range::-webkit-slider-thumb:active {
-      cursor: grabbing;
+    .fluid-slider::-webkit-slider-thumb:active {
       transform: scale(1.15);
+      cursor: grabbing;
     }
 
-    .fuel-pill {
+    /* Quick Tick Marks */
+    .gauge-ticks {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 12px;
-      background: #ffffff;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 0.88rem;
-      font-weight: 700;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 8px;
+      padding: 0 4px;
     }
 
-    .fuel-pill .frac {
-      color: var(--accent);
+    .gauge-ticks span {
+      font-size: 0.78rem;
       font-weight: 800;
+      color: #64748b;
+      cursor: pointer;
+      padding: 3px 8px;
+      border-radius: 8px;
+      transition: all 0.15s;
     }
 
-    /* Modern Checkbox Items */
+    .gauge-ticks span.active {
+      background: #0f172a;
+      color: #ffffff;
+      transform: scale(1.08);
+    }
+
+    /* Live Fuel Value Pill */
+    .fuel-readout-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 8px 18px;
+      background: var(--surface-subtle);
+      border: 1.5px solid var(--border);
+      border-radius: 30px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .fuel-val {
+      font-weight: 800;
+      transition: color 0.2s;
+    }
+
+    /* 🚨 MANDATORY RED WARNING NOTICE (< 1/4 Tank) */
+    .fuel-warning-notice {
+      display: none;
+      width: 100%;
+      background: #fef2f2;
+      border: 2px solid #ef4444;
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-top: 14px;
+      animation: pulseGlow 1.8s infinite ease-in-out;
+    }
+
+    .fuel-warning-notice.visible {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .warning-icon {
+      color: #ef4444;
+      font-size: 1.4rem;
+      margin-top: 2px;
+      flex-shrink: 0;
+    }
+
+    .warning-content h4 {
+      color: #991b1b;
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+    }
+
+    .warning-content p {
+      color: #b91c1c;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Checklist Section */
     .checklist {
       display: flex;
       flex-direction: column;
@@ -408,13 +613,13 @@
     .check-card {
       display: flex;
       align-items: center;
-      padding: 13px 14px;
-      background: #f8fafc;
+      padding: 14px 16px;
+      background: var(--surface-subtle);
       border: 1.5px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-md);
       cursor: pointer;
       user-select: none;
-      transition: all 0.15s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .check-card:active {
@@ -461,7 +666,7 @@
 
     .check-label {
       font-size: 0.92rem;
-      font-weight: 600;
+      font-weight: 700;
       color: #334155;
     }
 
@@ -473,11 +678,11 @@
     /* Submit Button */
     .submit-btn {
       width: 100%;
-      height: 52px;
-      background: var(--accent-gradient);
+      height: 56px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
       color: white;
       border: none;
-      border-radius: 14px;
+      border-radius: var(--radius-md);
       font-size: 1.05rem;
       font-weight: 800;
       display: flex;
@@ -485,146 +690,89 @@
       justify-content: center;
       gap: 10px;
       cursor: pointer;
-      box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.35);
       transition: all 0.2s;
     }
 
-    .submit-btn:active {
-      transform: scale(0.98);
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(249, 115, 22, 0.45);
     }
 
-    /* Logged History List View */
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Read-Only History View (Protected & Chronologically Sorted) */
     .history-card {
       background: white;
-      border-radius: var(--radius);
-      padding: 16px;
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
       margin-bottom: 12px;
       border: 1px solid var(--border);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      box-shadow: var(--shadow-sm);
     }
 
-    .history-header {
+    .history-top-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .history-vehicle {
-      font-weight: 800;
-      font-size: 1rem;
-      color: var(--text);
-      display: flex;
+    .history-veh-badge {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #0f172a;
     }
 
-    .history-time {
-      font-size: 0.75rem;
-      color: #94a3b8;
+    .history-timestamp {
+      font-size: 0.76rem;
+      color: #64748b;
+      font-weight: 600;
     }
 
-    .history-meta {
+    .history-driver {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 10px;
+    }
+
+    .history-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 8px;
     }
 
-    .meta-chip {
+    .history-chip {
       background: #f1f5f9;
       padding: 4px 10px;
       border-radius: 8px;
       font-size: 0.78rem;
-      font-weight: 600;
+      font-weight: 700;
       color: #475569;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #94a3b8;
-    }
-
-    .empty-state i {
-      font-size: 3rem;
-      margin-bottom: 12px;
-      color: #cbd5e1;
-    }
-
-    /* Modal / QR Overlay */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(5px);
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
+      gap: 5px;
     }
 
-    .modal-backdrop.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-sheet {
-      background: white;
-      border-radius: 24px;
-      padding: 24px 20px;
-      width: 100%;
-      max-width: 360px;
+    .history-locked-note {
       text-align: center;
-      transform: translateY(20px);
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    .modal-backdrop.open .modal-sheet {
-      transform: translateY(0);
-    }
-
-    .qr-frame {
-      padding: 14px;
-      background: #f8fafc;
-      border: 2px dashed #cbd5e1;
-      border-radius: 16px;
-      display: inline-block;
-      margin: 14px 0 18px;
-    }
-
-    .btn-close {
-      background: #f1f5f9;
-      border: none;
       padding: 12px;
-      border-radius: 12px;
-      font-weight: 700;
-      width: 100%;
-      color: #475569;
-      cursor: pointer;
-    }
-
-    .btn-print-qr {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-weight: 700;
-      width: 100%;
-      cursor: pointer;
-      margin-bottom: 8px;
+      color: #94a3b8;
+      font-size: 0.78rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
     }
 
-    /* Success Toast */
+    /* Toast Notification */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -640,7 +788,7 @@
       z-index: 200;
       transform: translateY(120px);
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
     }
 
     .toast.active {
@@ -650,31 +798,16 @@
     .toast i {
       color: var(--success);
     }
-
-    /* Print styling */
-    @media print {
-      body * { visibility: hidden; }
-      .modal-sheet, .modal-sheet * { visibility: visible; }
-      .modal-sheet {
-        position: absolute;
-        left: 50%;
-        top: 25%;
-        transform: translate(-50%, -25%) !important;
-        box-shadow: none;
-        border: 2px solid #000;
-      }
-      .modal-btns { display: none !important; }
-    }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <div class="app-wrap">
     
-    <!-- Top Navigation -->
+    <!-- Navigation Tabs -->
     <div class="nav-tabs">
       <button type="button" class="nav-tab active" id="tabFormBtn" onclick="switchTab('form')">
-        <i class="fa-solid fa-file-pen"></i> Check-In Form
+        <i class="fa-solid fa-clipboard-check"></i> Check-In Form
       </button>
       <button type="button" class="nav-tab" id="tabHistoryBtn" onclick="switchTab('history')">
         <i class="fa-solid fa-clock-rotate-left"></i> History
@@ -682,18 +815,16 @@
       </button>
     </div>
 
-    <!-- Header Banner -->
-    <div class="header-card">
-      <div class="header-top">
-        <div class="tag-badge">
-          <i class="fa-solid fa-truck-ramp-box"></i> Return Checklist
+    <!-- Header Hero Banner (Clean, no QR shown here) -->
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-pill">
+          <i class="fa-solid fa-shield-halved"></i> Return Checklist
         </div>
-        <button type="button" class="qr-badge-btn" id="openQrBtn">
-          <i class="fa-solid fa-qrcode"></i> Show QR
-        </button>
+        <div class="hero-date" id="heroDateDisplay">Loading...</div>
       </div>
       <h1>Vehicle Check-In</h1>
-      <p>Fill out when returning the truck or van at the end of the shift.</p>
+      <p>Log ending trip mileage, verify return condition & record fuel level.</p>
     </div>
 
     <!-- VIEW 1: CHECK-IN FORM -->
@@ -725,52 +856,120 @@
           </div>
         </div>
 
-        <!-- 2. Driver & Mileage -->
+        <!-- 2. Trip & Driver Details (Autofilled Date) -->
         <div class="card">
           <div class="card-title">
-            <i class="fa-solid fa-user-clock"></i> 2. Driver & Mileage
+            <i class="fa-solid fa-user-clock"></i> 2. Driver & Mileage Details
           </div>
+
           <div class="form-group">
-            <label class="field-label" for="driverName">Driver's Name</label>
+            <label class="field-label" for="autoDate">Check-In Date & Time (Autofilled)</label>
             <div class="input-box">
-              <i class="fa-solid fa-user"></i>
-              <input type="text" id="driverName" class="form-input" placeholder="e.g. John Doe" required />
+              <i class="fa-solid fa-calendar-check"></i>
+              <input type="text" id="autoDate" class="form-input" readonly />
             </div>
           </div>
+
+          <div class="form-group">
+            <label class="field-label" for="driverName">Driver's Full Name</label>
+            <div class="input-box">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="driverName" class="form-input" placeholder="e.g. John Smith" required autocomplete="name" />
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="field-label" for="endMileage">Ending Odometer Mileage</label>
             <div class="input-box">
               <i class="fa-solid fa-gauge-high"></i>
-              <input type="number" id="endMileage" class="form-input mono" placeholder="e.g. 142580" required />
+              <input type="number" id="endMileage" class="form-input mono" placeholder="e.g. 142580" required min="0" step="any" />
             </div>
           </div>
         </div>
 
-        <!-- 3. Fuel Slider (U-Haul Style) -->
+        <!-- 3. AutoMeter-Style Round Fuel Gauge -->
         <div class="card">
           <div class="card-title">
             <i class="fa-solid fa-gas-pump"></i> 3. Fuel Level Gauge
           </div>
-          <div class="fuel-box">
-            <div class="meter-bar">
-              <div class="meter-fill" id="meterFill"></div>
-            </div>
-            <div class="ticks">
-              <span class="tick" onclick="setFuel(0)">E</span>
-              <span class="tick" onclick="setFuel(0.25)">1/4</span>
-              <span class="tick active" onclick="setFuel(0.5)">1/2</span>
-              <span class="tick" onclick="setFuel(0.75)">3/4</span>
-              <span class="tick" onclick="setFuel(1)">F</span>
+
+          <div class="gauge-wrapper">
+            <!-- Round Analog Bezel -->
+            <div class="round-gauge">
+              <div class="gauge-face">
+                
+                <!-- Black Upper Crescent -->
+                <div class="gauge-upper-black"></div>
+                <div class="gauge-color-arc" id="gaugeColorArc"></div>
+
+                <!-- SVG Markings & Numbers (E, 1/4, 1/2, 3/4, F) -->
+                <svg class="gauge-svg-overlay" viewBox="0 0 230 230">
+                  <!-- Tick Lines -->
+                  <!-- E tick -->
+                  <line x1="56" y1="106" x2="68" y2="108" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+                  <!-- 1/4 tick -->
+                  <line x1="94" y1="72" x2="100" y2="82" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+                  <!-- 1/2 tick -->
+                  <line x1="125" y1="64" x2="125" y2="78" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" />
+                  <!-- 3/4 tick -->
+                  <line x1="156" y1="72" x2="150" y2="82" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+                  <!-- F tick -->
+                  <line x1="194" y1="106" x2="182" y2="108" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+
+                  <!-- Text Labels -->
+                  <text x="54" y="104" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="19">E</text>
+                  <text x="80" y="58" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14">1/4</text>
+                  <text x="114" y="50" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="15">1/2</text>
+                  <text x="146" y="58" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="700" font-size="14">3/4</text>
+                  <text x="180" y="104" fill="#ffffff" font-family="'Plus Jakarta Sans', sans-serif" font-weight="800" font-size="19">F</text>
+                </svg>
+
+                <!-- Center Gauge Branding -->
+                <div class="gauge-branding">
+                  FUEL LEVEL
+                  <span>AUTO METER</span>
+                </div>
+
+                <!-- Moving Needle -->
+                <div class="gauge-needle" id="gaugeNeedle"></div>
+                <div class="gauge-center-cap"></div>
+
+                <div class="gauge-sub-brand">Auto Meter</div>
+              </div>
             </div>
 
-            <div class="slider-wrapper">
-              <input type="range" id="fuelSlider" class="fuel-range" min="0" max="100" value="50" step="5" />
+            <!-- Interactive Touch Slider -->
+            <div class="slider-box">
+              <input type="range" id="fuelSlider" class="fluid-slider" min="0" max="100" value="50" step="1" />
             </div>
 
-            <div class="fuel-pill">
+            <!-- Quick Jump Ticks -->
+            <div class="gauge-ticks">
+              <span onclick="setFuel(0)">E</span>
+              <span onclick="setFuel(0.25)">1/4</span>
+              <span class="active" onclick="setFuel(0.5)">1/2</span>
+              <span onclick="setFuel(0.75)">3/4</span>
+              <span onclick="setFuel(1)">F</span>
+            </div>
+
+            <!-- Value Readout Pill -->
+            <div class="fuel-readout-pill">
+              <i class="fa-solid fa-oil-can" id="fuelIcon" style="color: #f59e0b;"></i>
               <span>Fuel Left:</span>
-              <span class="frac" id="fuelPillText">1/2 Tank (50%)</span>
+              <span class="fuel-val" id="fuelText" style="color: #f59e0b;">1/2 Tank (50%)</span>
             </div>
+
+            <!-- 🚨 REQUIRED RED WARNING NOTICE (Appears when slider < 1/4) -->
+            <div class="fuel-warning-notice" id="fuelWarningNotice">
+              <div class="warning-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="warning-content">
+                <h4>Low Fuel Alert</h4>
+                <p>Please make sure the fuel is above 3/4 before completing vehicle return.</p>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -806,96 +1005,141 @@
           </div>
         </div>
 
-        <!-- Submit -->
+        <!-- Submit Button -->
         <button type="submit" class="submit-btn" id="submitBtn">
-          <i class="fa-solid fa-circle-check"></i> Save & Complete Check-In
+          <i class="fa-solid fa-paper-plane"></i> Submit Vehicle Return
         </button>
 
       </form>
     </div>
 
-    <!-- VIEW 2: LOGGED HISTORY (Self-contained, no external sheets needed) -->
+    <!-- VIEW 2: LOGGED HISTORY (Permanently Protected & Sorted By Date) -->
     <div id="historyView" style="display: none;">
       <div id="historyList"></div>
-      <div style="margin-top: 14px; text-align: center;">
-        <button type="button" onclick="clearAllHistory()" style="background: none; border: none; color: #ef4444; font-size: 0.85rem; font-weight: 700; cursor: pointer; padding: 10px;">
-          <i class="fa-solid fa-trash"></i> Clear Past Records
-        </button>
+      <div class="history-locked-note">
+        <i class="fa-solid fa-lock"></i> All vehicle check-in records are permanently logged & date-sorted.
       </div>
     </div>
 
-  </div>
-
-  <!-- QR Modal (Scan & Print) -->
-  <div class="modal-backdrop" id="qrModal">
-    <div class="modal-sheet">
-      <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">Scan QR Code</h3>
-      <p style="font-size: 0.82rem; color: #64748b; margin-top: 4px;">
-        Scan with your phone camera to open this checklist instantly.
-      </p>
-
-      <div class="qr-frame">
-        <canvas id="qrCanvas"></canvas>
-      </div>
-
-      <div class="modal-btns">
-        <button type="button" class="btn-print-qr" onclick="window.print()">
-          <i class="fa-solid fa-print"></i> Print Sign for Vehicle
-        </button>
-        <button type="button" class="btn-close" id="closeQrBtn">Close</button>
-      </div>
-    </div>
   </div>
 
   <!-- Toast -->
   <div class="toast" id="toast">
     <i class="fa-solid fa-circle-check fa-lg"></i>
-    <span id="toastText">Check-in saved successfully!</span>
+    <span id="toastText">Check-in logged successfully!</span>
   </div>
 
   <script>
-    // --- Fuel Slider Gauge ---
+    // --- 1. Autofill Current Date & Time ---
+    function updateAutoDate() {
+      const now = new Date();
+      const options = { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      };
+      const formatted = now.toLocaleDateString('en-US', options);
+      
+      const autoDate = document.getElementById('autoDate');
+      const heroDate = document.getElementById('heroDateDisplay');
+      if (autoDate) autoDate.value = formatted;
+      if (heroDate) heroDate.textContent = formatted;
+    }
+    updateAutoDate();
+    // Keep time fresh
+    setInterval(updateAutoDate, 30000);
+
+    // --- 2. AutoMeter Gauge & Color Gradient Logic ---
     const fuelSlider = document.getElementById('fuelSlider');
-    const meterFill = document.getElementById('meterFill');
-    const fuelPillText = document.getElementById('fuelPillText');
-    const ticks = document.querySelectorAll('.ticks .tick');
+    const gaugeNeedle = document.getElementById('gaugeNeedle');
+    const fuelText = document.getElementById('fuelText');
+    const fuelIcon = document.getElementById('fuelIcon');
+    const gaugeColorArc = document.getElementById('gaugeColorArc');
+    const warningNotice = document.getElementById('fuelWarningNotice');
+    const tickSpans = document.querySelectorAll('.gauge-ticks span');
 
-    function updateFuel(val) {
+    // Needle Angle: E = -65deg, F = +65deg (130deg range)
+    function updateGauge(val) {
       val = parseInt(val, 10);
-      meterFill.style.width = val + '%';
+      const angle = -65 + (val / 100) * 130;
+      gaugeNeedle.style.transform = `translate(-50%, -86px) rotate(${angle}deg)`;
 
-      let text = '';
-      if (val === 0) text = 'Empty (0%)';
-      else if (val <= 20) text = '1/4 Tank (' + val + '%)';
-      else if (val <= 40) text = '3/8 Tank (' + val + '%)';
-      else if (val <= 60) text = '1/2 Tank (' + val + '%)';
-      else if (val <= 80) text = '3/4 Tank (' + val + '%)';
-      else if (val < 100) text = '7/8 Tank (' + val + '%)';
-      else text = 'Full Tank (100%)';
+      // Dynamic Gradient Color calculation (Red -> Yellow -> Green)
+      // val 0: Red (#ef4444)
+      // val 50: Amber (#f59e0b)
+      // val 100: Emerald (#10b981)
+      let r, g, b;
+      if (val < 50) {
+        // Red to Yellow
+        const ratio = val / 50;
+        r = 239;
+        g = Math.round(68 + ratio * (158 - 68));
+        b = Math.round(68 - ratio * 57);
+      } else {
+        // Yellow to Green
+        const ratio = (val - 50) / 50;
+        r = Math.round(245 - ratio * (245 - 16));
+        g = Math.round(158 + ratio * (185 - 158));
+        b = Math.round(11 + ratio * (129 - 11));
+      }
+      const currentColor = `rgb(${r}, ${g}, ${b})`;
 
-      fuelPillText.textContent = text;
+      // Update color arc & readout text
+      gaugeColorArc.style.borderTopColor = currentColor;
+      gaugeColorArc.style.borderRightColor = currentColor;
+      fuelText.style.color = currentColor;
+      fuelIcon.style.color = currentColor;
 
-      const marks = [0, 25, 50, 75, 100];
-      let best = 0;
-      let min = 100;
-      marks.forEach((m, idx) => {
-        if (Math.abs(val - m) < min) {
-          min = Math.abs(val - m);
-          best = idx;
+      // Label text
+      let label = '';
+      if (val === 0) label = 'Empty (0%)';
+      else if (val <= 15) label = 'Nearly Empty (' + val + '%)';
+      else if (val <= 30) label = '1/4 Tank (' + val + '%)';
+      else if (val <= 45) label = '3/8 Tank (' + val + '%)';
+      else if (val <= 58) label = '1/2 Tank (' + val + '%)';
+      else if (val <= 70) label = '5/8 Tank (' + val + '%)';
+      else if (val <= 85) label = '3/4 Tank (' + val + '%)';
+      else if (val < 100) label = '7/8 Tank (' + val + '%)';
+      else label = 'Full Tank (100%)';
+
+      fuelText.textContent = label;
+
+      // 🚨 RED WARNING: If slider is below 1/4 (val < 25)
+      if (val < 25) {
+        warningNotice.classList.add('visible');
+      } else {
+        warningNotice.classList.remove('visible');
+      }
+
+      // Nearest Tick active class
+      const ticks = [0, 25, 50, 75, 100];
+      let bestIdx = 0;
+      let minDiff = 100;
+      ticks.forEach((t, i) => {
+        const diff = Math.abs(val - t);
+        if (diff < minDiff) {
+          minDiff = diff;
+          bestIdx = i;
         }
       });
-      ticks.forEach((t, i) => t.classList.toggle('active', i === best));
+      tickSpans.forEach((sp, i) => sp.classList.toggle('active', i === bestIdx));
     }
 
-    fuelSlider.addEventListener('input', (e) => updateFuel(e.target.value));
+    fuelSlider.addEventListener('input', (e) => updateGauge(e.target.value));
 
     window.setFuel = function(fraction) {
       const val = Math.round(fraction * 100);
       fuelSlider.value = val;
-      updateFuel(val);
+      updateGauge(val);
     };
 
-    // --- Interactive Checkboxes ---
+    // Initialize Gauge at 50%
+    updateGauge(50);
+
+    // --- 3. Interactive Checkboxes ---
     const checkCards = document.querySelectorAll('.check-card');
     checkCards.forEach(card => {
       const chk = card.querySelector('input[type="checkbox"]');
@@ -904,7 +1148,61 @@
       });
     });
 
-    // --- Tab Switching ---
+    // --- 4. Permanent & Date-Sorted History ---
+    function getStoredRecords() {
+      try {
+        const list = JSON.parse(localStorage.getItem('fleet_checkins_v2') || '[]');
+        // Sort strictly by Date descending (newest first)
+        list.sort((a, b) => b.timestampMs - a.timestampMs);
+        return list;
+      } catch {
+        return [];
+      }
+    }
+
+    function updateBadge() {
+      const records = getStoredRecords();
+      document.getElementById('historyCount').textContent = records.length;
+    }
+
+    function renderHistory() {
+      const listEl = document.getElementById('historyList');
+      const records = getStoredRecords();
+
+      if (records.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align: center; padding: 45px 20px; color: #94a3b8;">
+            <i class="fa-solid fa-clipboard-list" style="font-size: 3rem; margin-bottom: 12px; color: #cbd5e1;"></i>
+            <p><strong>No check-ins recorded yet</strong></p>
+            <p style="font-size: 0.8rem; margin-top: 4px;">Submissions are stored securely here and sorted chronologically.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = records.map(r => `
+        <div class="history-card">
+          <div class="history-top-row">
+            <span class="history-veh-badge">
+              <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
+              ${r.vehicle}
+            </span>
+            <span class="history-timestamp">${r.dateString}</span>
+          </div>
+          <div class="history-driver">
+            <i class="fa-solid fa-user" style="color: #94a3b8; font-size: 0.8rem; margin-right: 4px;"></i>
+            Driver: <strong>${r.driverName}</strong>
+          </div>
+          <div class="history-chips">
+            <span class="history-chip"><i class="fa-solid fa-gauge-high"></i> ${r.endMileage} mi</span>
+            <span class="history-chip"><i class="fa-solid fa-gas-pump"></i> ${r.fuelLevel}</span>
+            <span class="history-chip" style="color: #059669; background: #ecfdf5;"><i class="fa-solid fa-check-double"></i> Complete</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // --- 5. Tab Switching ---
     window.switchTab = function(tab) {
       const formView = document.getElementById('formView');
       const historyView = document.getElementById('historyView');
@@ -925,65 +1223,7 @@
       }
     };
 
-    // --- Local Storage Management (Self-contained Webpage) ---
-    function getStoredRecords() {
-      try {
-        return JSON.parse(localStorage.getItem('fleet_checkins') || '[]');
-      } catch {
-        return [];
-      }
-    }
-
-    function updateBadge() {
-      const records = getStoredRecords();
-      document.getElementById('historyCount').textContent = records.length;
-    }
-
-    function renderHistory() {
-      const list = document.getElementById('historyList');
-      const records = getStoredRecords();
-
-      if (records.length === 0) {
-        list.innerHTML = `
-          <div class="empty-state">
-            <i class="fa-solid fa-clipboard-list"></i>
-            <p><strong>No check-ins logged yet</strong></p>
-            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins will show up here automatically.</p>
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = records.map(r => `
-        <div class="history-card">
-          <div class="history-header">
-            <span class="history-vehicle">
-              <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
-              ${r.vehicle}
-            </span>
-            <span class="history-time">${r.timestamp}</span>
-          </div>
-          <div style="font-size: 0.92rem; font-weight: 700; color: #1e293b;">
-            <i class="fa-solid fa-user" style="color: #94a3b8; font-size: 0.8rem; margin-right: 4px;"></i> ${r.driverName}
-          </div>
-          <div class="history-meta">
-            <span class="meta-chip"><i class="fa-solid fa-gauge-high"></i> ${r.endMileage} mi</span>
-            <span class="meta-chip"><i class="fa-solid fa-gas-pump"></i> ${r.fuelLevel}</span>
-            <span class="meta-chip" style="color: #059669; background: #ecfdf5;"><i class="fa-solid fa-check"></i> Checklist Done</span>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    window.clearAllHistory = function() {
-      if (confirm('Clear all logged check-in records on this device?')) {
-        localStorage.removeItem('fleet_checkins');
-        updateBadge();
-        renderHistory();
-      }
-    };
-
-    // --- Form Submission ---
+    // --- 6. Form Submission ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
@@ -997,14 +1237,16 @@
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
+      const now = new Date();
       const vehicle = document.querySelector('input[name="vehicle"]:checked').value;
       const driverName = document.getElementById('driverName').value.trim();
       const endMileage = document.getElementById('endMileage').value.trim();
-      const fuelLevel = fuelPillText.textContent;
+      const fuelLevel = fuelText.textContent;
 
       const newRecord = {
         id: Date.now(),
-        timestamp: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        timestampMs: now.getTime(),
+        dateString: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         vehicle,
         driverName,
         endMileage,
@@ -1013,42 +1255,16 @@
 
       const records = getStoredRecords();
       records.unshift(newRecord);
-      localStorage.setItem('fleet_checkins', JSON.stringify(records));
+      localStorage.setItem('fleet_checkins_v2', JSON.stringify(records));
 
       updateBadge();
-      showToast(`Check-in saved for ${driverName}!`);
+      showToast(`Check-in recorded for ${driverName}!`);
 
-      // Reset form
+      // Reset
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
-    });
-
-    // --- QR Modal Logic ---
-    const qrModal = document.getElementById('qrModal');
-    const openQrBtn = document.getElementById('openQrBtn');
-    const closeQrBtn = document.getElementById('closeQrBtn');
-    const qrCanvas = document.getElementById('qrCanvas');
-
-    const qr = new QRious({
-      element: qrCanvas,
-      value: window.location.href,
-      size: 200,
-      level: 'H',
-      foreground: '#0f172a'
-    });
-
-    openQrBtn.addEventListener('click', () => {
-      qr.set({ value: window.location.href });
-      qrModal.classList.add('open');
-    });
-
-    closeQrBtn.addEventListener('click', () => {
-      qrModal.classList.remove('open');
-    });
-
-    qrModal.addEventListener('click', (e) => {
-      if (e.target === qrModal) qrModal.classList.remove('open');
+      updateAutoDate();
     });
 
     // Init
