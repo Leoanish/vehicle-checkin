@@ -769,9 +769,7 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
-    /* ===================================================
-       ADMIN HISTORY & BATCH ACTIONS TOOLBAR
-       =================================================== */
+    /* Admin History & Batch Actions Toolbar */
     .admin-history-toolbar {
       display: none;
       background: #ffffff;
@@ -920,9 +918,8 @@
       font-weight: 600;
     }
 
-    /* Admin Delete Trash Icon Button */
     .admin-del-btn {
-      display: none; /* Only in admin mode */
+      display: none;
       background: #fee2e2;
       border: none;
       color: #ef4444;
@@ -942,7 +939,7 @@
     }
 
     .admin-card-checkbox {
-      display: none; /* Only in admin mode */
+      display: none;
       width: 18px;
       height: 18px;
       cursor: pointer;
@@ -1345,7 +1342,7 @@
       <div class="admin-history-toolbar" id="adminHistoryToolbar">
         <div class="toolbar-title">
           <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Management Controls</span>
-          <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Manager Mode</span>
+          <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Cloud Synced</span>
         </div>
 
         <div class="date-filter-grid">
@@ -1385,7 +1382,7 @@
       </div>
 
       <div class="history-locked-note">
-        <i class="fa-solid fa-lock"></i> All vehicle check-in records are permanently logged & date-sorted.
+        <i class="fa-solid fa-cloud"></i> All records are synced live across all devices & stored safely.
       </div>
     </div>
 
@@ -1417,6 +1414,12 @@
   </div>
 
   <script>
+    // =========================================================================
+    // GOOGLE SHEETS LIVE CLOUD SYNC CONFIGURATION
+    // Paste your Google Apps Script Web App URL below:
+    // =========================================================================
+    const GOOGLE_SCRIPT_URL = ""; 
+
     // --- 1. Admin Detection (?admin=true) ---
     const urlParams = new URLSearchParams(window.location.search);
     const isAdmin = urlParams.get('admin') === 'true';
@@ -1556,10 +1559,12 @@
       });
     });
 
-    // --- 5. Permanent & Date-Sorted History ---
-    function getStoredRecords() {
+    // --- 5. Data Fetching (Cloud Google Sheets + Local Fallback) ---
+    let currentRecordsCache = [];
+
+    function getLocalRecords() {
       try {
-        const list = JSON.parse(localStorage.getItem('fleet_checkins_v3') || '[]');
+        const list = JSON.parse(localStorage.getItem('fleet_checkins_cloud_v1') || '[]');
         list.sort((a, b) => b.timestampMs - a.timestampMs);
         return list;
       } catch {
@@ -1567,34 +1572,59 @@
       }
     }
 
-    function saveRecords(list) {
-      localStorage.setItem('fleet_checkins_v3', JSON.stringify(list));
+    function saveLocalRecords(list) {
+      localStorage.setItem('fleet_checkins_cloud_v1', JSON.stringify(list));
+      currentRecordsCache = list;
+      updateBadge();
+      renderHistory();
+    }
+
+    async function fetchCloudRecords() {
+      if (!GOOGLE_SCRIPT_URL) {
+        currentRecordsCache = getLocalRecords();
+        updateBadge();
+        renderHistory();
+        return;
+      }
+
+      try {
+        const res = await fetch(GOOGLE_SCRIPT_URL);
+        const json = await res.json();
+        if (json.status === 'success' && Array.isArray(json.data)) {
+          currentRecordsCache = json.data;
+          // Sync to local as offline cache
+          localStorage.setItem('fleet_checkins_cloud_v1', JSON.stringify(currentRecordsCache));
+        } else {
+          currentRecordsCache = getLocalRecords();
+        }
+      } catch (err) {
+        console.warn('Could not reach Google Sheets, using cached records:', err);
+        currentRecordsCache = getLocalRecords();
+      }
       updateBadge();
       renderHistory();
     }
 
     function updateBadge() {
-      const records = getStoredRecords();
-      document.getElementById('historyCount').textContent = records.length;
+      document.getElementById('historyCount').textContent = currentRecordsCache.length;
     }
 
     function renderHistory() {
       const listEl = document.getElementById('historyList');
-      const records = getStoredRecords();
 
-      if (records.length === 0) {
+      if (currentRecordsCache.length === 0) {
         listEl.innerHTML = `
           <div style="text-align: center; padding: 45px 20px; color: #94a3b8;">
             <i class="fa-solid fa-clipboard-list" style="font-size: 3rem; margin-bottom: 12px; color: #cbd5e1;"></i>
             <p><strong>No check-ins recorded yet</strong></p>
-            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins appear here sorted by date.</p>
+            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins from any device will appear here.</p>
           </div>
         `;
         syncBatchDeleteState();
         return;
       }
 
-      listEl.innerHTML = records.map(r => `
+      listEl.innerHTML = currentRecordsCache.map(r => `
         <div class="history-card" id="card-${r.id}" data-id="${r.id}" data-time="${r.timestampMs}">
           <div class="history-top-row">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -1634,15 +1664,29 @@
     }
 
     // --- 6. Admin Powers: Delete Single, Batch Delete, & Archive ---
+    async function sendDeleteRequestToCloud(ids) {
+      if (!GOOGLE_SCRIPT_URL) return;
+      try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', ids: ids })
+        });
+      } catch (e) {
+        console.error('Error sending delete to cloud:', e);
+      }
+    }
+
     window.deleteSingleRecord = function(id) {
-      const records = getStoredRecords();
-      const target = records.find(r => r.id === id);
+      const target = currentRecordsCache.find(r => r.id === id);
       if (!target) return;
 
-      if (confirm(`Admin Action: Are you sure you want to permanently delete the check-in record for "${target.driverName}" (${target.vehicle} - ${target.dateString})?`)) {
-        const remaining = records.filter(r => r.id !== id);
-        saveRecords(remaining);
-        showToast('Record deleted by admin.');
+      if (confirm(`Admin Action: Permanently delete check-in for "${target.driverName}" (${target.vehicle})?`)) {
+        const remaining = currentRecordsCache.filter(r => r.id !== id);
+        saveLocalRecords(remaining);
+        sendDeleteRequestToCloud([id]);
+        showToast('Record deleted.');
       }
     };
 
@@ -1664,7 +1708,6 @@
       const countEl = document.getElementById('selectedCount');
       const deleteBtn = document.getElementById('btnBatchDelete');
 
-      // Update card visual highlights
       document.querySelectorAll('.admin-card-checkbox').forEach(cb => {
         const card = document.getElementById('card-' + cb.value);
         if (card) {
@@ -1688,11 +1731,11 @@
 
       if (idsToDelete.length === 0) return;
 
-      if (confirm(`Admin Action: Permanently delete ${idsToDelete.length} selected record(s)? This action cannot be undone.`)) {
-        const records = getStoredRecords();
-        const remaining = records.filter(r => !idsToDelete.includes(r.id));
-        saveRecords(remaining);
-        showToast(`Deleted ${idsToDelete.length} check-in record(s).`);
+      if (confirm(`Admin Action: Permanently delete ${idsToDelete.length} selected record(s)?`)) {
+        const remaining = currentRecordsCache.filter(r => !idsToDelete.includes(r.id));
+        saveLocalRecords(remaining);
+        sendDeleteRequestToCloud(idsToDelete);
+        showToast(`Deleted ${idsToDelete.length} record(s).`);
       }
     };
 
@@ -1713,8 +1756,7 @@
         return;
       }
 
-      const records = getStoredRecords();
-      const toArchive = records.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
+      const toArchive = currentRecordsCache.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
 
       if (toArchive.length === 0) {
         alert('No records found in this selected date range.');
@@ -1725,15 +1767,14 @@
         const currentArchived = JSON.parse(localStorage.getItem('fleet_archived_records') || '[]');
         localStorage.setItem('fleet_archived_records', JSON.stringify(currentArchived.concat(toArchive)));
 
-        const remaining = records.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
-        saveRecords(remaining);
+        const remaining = currentRecordsCache.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
+        saveLocalRecords(remaining);
         showToast(`Archived ${toArchive.length} record(s) successfully!`);
       }
     };
 
     window.downloadHistoryPdf = function() {
-      const records = getStoredRecords();
-      if (records.length === 0) {
+      if (currentRecordsCache.length === 0) {
         alert('No records available to export.');
         return;
       }
@@ -1741,12 +1782,12 @@
       const fromVal = document.getElementById('filterFromDate').value;
       const toVal = document.getElementById('filterToDate').value;
 
-      let filtered = records;
+      let filtered = currentRecordsCache;
       let dateSubtitle = "All Time Log";
       if (fromVal && toVal) {
         const fromTime = new Date(fromVal + "T00:00:00").getTime();
         const toTime = new Date(toVal + "T23:59:59").getTime();
-        filtered = records.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
+        filtered = currentRecordsCache.filter(r => r.timestampMs >= fromTime && r.timestampMs <= toTime);
         dateSubtitle = `Date Range: ${fromVal} to ${toVal}`;
       }
 
@@ -1833,11 +1874,11 @@
         historyView.style.display = 'block';
         tabFormBtn.classList.remove('active');
         tabHistoryBtn.classList.add('active');
-        renderHistory();
+        fetchCloudRecords();
       }
     };
 
-    // --- 8. Seamless Form Submission & Key Reminder Alert ---
+    // --- 8. Seamless Form Submission (Posts to Cloud + Shows Key Reminder) ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
@@ -1850,7 +1891,7 @@
       setTimeout(() => toast.classList.remove('active'), 3500);
     }
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const now = new Date();
@@ -1871,9 +1912,23 @@
         remarks
       };
 
-      const records = getStoredRecords();
-      records.unshift(newRecord);
-      saveRecords(records);
+      // Save locally
+      currentRecordsCache.unshift(newRecord);
+      saveLocalRecords(currentRecordsCache);
+
+      // Post to Google Sheets
+      if (GOOGLE_SCRIPT_URL) {
+        try {
+          fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add', record: newRecord })
+          });
+        } catch (err) {
+          console.error('Error posting to cloud:', err);
+        }
+      }
 
       successTitle.textContent = `Check-In Completed (${driverName})!`;
       successAlertCard.classList.add('show');
@@ -1887,7 +1942,8 @@
       updateAutoDate();
     });
 
-    updateBadge();
+    // Initial load
+    fetchCloudRecords();
   </script>
 </body>
 </html>
