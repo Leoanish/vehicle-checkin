@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vehicle Return & End-of-Trip Checklist</title>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  
+  <!-- FontAwesome Icons & QRious library for QR generation -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-light: #eff6ff;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --success: #10b981;
+      --bg: #0f172a;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 12px 60px;
+    }
+
+    /* Container */
+    .app-container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      padding: 24px 20px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header-card::after {
+      content: "";
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, rgba(37,99,235,0.3) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #93c5fd;
+    }
+
+    .header-card h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .header-card p {
+      font-size: 0.88rem;
+      color: #94a3b8;
+    }
+
+    .quick-qr-trigger {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      border-radius: 12px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .quick-qr-trigger:active {
+      transform: scale(0.96);
+    }
+
+    /* Main Form */
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .card-title i {
+      color: var(--primary);
+      font-size: 1.05rem;
+    }
+
+    /* Vehicle Selector Buttons */
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .vehicle-option {
+      position: relative;
+    }
+
+    .vehicle-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .vehicle-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 16px 10px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      background: #f8fafc;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .vehicle-btn i {
+      font-size: 1.8rem;
+      color: #64748b;
+      margin-bottom: 8px;
+      transition: color 0.2s;
+    }
+
+    .vehicle-btn .vehicle-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #1e293b;
+    }
+
+    .vehicle-btn .vehicle-desc {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .vehicle-option input[type="radio"]:checked + .vehicle-btn {
+      border-color: var(--primary);
+      background: var(--primary-light);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .vehicle-option input[type="radio"]:checked + .vehicle-btn i {
+      color: var(--primary);
+    }
+
+    /* Input Groups */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      color: #94a3b8;
+      font-size: 1rem;
+      pointer-events: none;
+    }
+
+    .form-control {
+      width: 100%;
+      height: 48px;
+      padding: 0 14px 0 42px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      font-size: 0.98rem;
+      font-family: inherit;
+      color: #0f172a;
+      background-color: #f8fafc;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .form-control.mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    /* U-Haul Style Fuel Gauge */
+    .fuel-gauge-container {
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 14px 14px;
+      margin-top: 4px;
+    }
+
+    /* Gauge Visual Representation */
+    .gauge-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .analog-meter-bar {
+      width: 100%;
+      height: 24px;
+      background: #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      border: 1px solid #cbd5e1;
+    }
+
+    .meter-fill {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(90deg, #ef4444 0%, #f59e0b 35%, #10b981 85%, #059669 100%);
+      transition: width 0.15s ease-out;
+      border-radius: 12px 0 0 12px;
+    }
+
+    .ticks-container {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+
+    .tick-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tick-label.active {
+      color: var(--primary-dark);
+      font-weight: 800;
+      transform: scale(1.1);
+    }
+
+    .fuel-slider-wrap {
+      margin-top: 14px;
+    }
+
+    .fuel-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      background: #cbd5e1;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .fuel-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 3px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      cursor: grab;
+      transition: transform 0.1s;
+    }
+
+    .fuel-slider::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.15);
+    }
+
+    .fuel-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 6px 14px;
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    .fuel-status-badge span.fraction {
+      color: var(--accent);
+      font-size: 1rem;
+    }
+
+    /* Checklist Items */
+    .checklist-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+
+    .check-item:active {
+      transform: scale(0.98);
+    }
+
+    .check-item input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .custom-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #94a3b8;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      background: #ffffff;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .custom-checkbox i {
+      color: #ffffff;
+      font-size: 0.8rem;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .check-item input[type="checkbox"]:checked ~ .custom-checkbox {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .check-item input[type="checkbox"]:checked ~ .custom-checkbox i {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .check-text {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .check-item input[type="checkbox"]:checked ~ .check-text {
+      color: #0f172a;
+    }
+
+    .check-item.checked {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+      width: 100%;
+      height: 54px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(249, 115, 22, 0.35);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 6px;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(249, 115, 22, 0.45);
+    }
+
+    .btn-submit:active {
+      transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* QR Code Modal / Drawer */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 26px 20px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header h3 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+
+    .modal-header p {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 18px;
+    }
+
+    .qr-box {
+      background: #ffffff;
+      padding: 14px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+
+    .qr-box canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .modal-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 600;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-print {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 600;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      background: #1e293b;
+      color: #ffffff;
+      padding: 14px 20px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      z-index: 200;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast i {
+      color: var(--success);
+      font-size: 1.1rem;
+    }
+
+    /* Print styling for QR poster */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      .modal-card, .modal-card * {
+        visibility: visible;
+      }
+      .modal-card {
+        position: absolute;
+        left: 50%;
+        top: 20%;
+        transform: translate(-50%, -20%) !important;
+        box-shadow: none;
+        border: 2px solid #000;
+      }
+      .modal-actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="header-card">
+      <div class="header-top">
+        <div class="badge-pill">
+          <i class="fa-solid fa-clipboard-check"></i>
+          End-of-Trip Check-In
+        </div>
+        <button type="button" class="quick-qr-trigger" id="openQrBtn" title="View & Print Scan QR Code">
+          <i class="fa-solid fa-qrcode"></i>
+          Scan QR
+        </button>
+      </div>
+      <h1>Vehicle Return Form</h1>
+      <p>Scan upon return to log mileage, fuel & vehicle safety checklist.</p>
+    </header>
+
+    <!-- Main Checklist Form -->
+    <form id="vehicleChecklistForm">
+
+      <!-- Step 1: Vehicle Selection -->
+      <section class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-truck-pickup"></i>
+          1. Select Vehicle
+        </div>
+        <div class="vehicle-grid">
+          <label class="vehicle-option">
+            <input type="radio" name="vehicle" value="Old Van" required checked />
+            <div class="vehicle-btn">
+              <i class="fa-solid fa-van-shuttle"></i>
+              <span class="vehicle-name">Old Van</span>
+              <span class="vehicle-desc">Fleet Unit #1</span>
+            </div>
+          </label>
+
+          <label class="vehicle-option">
+            <input type="radio" name="vehicle" value="New Truck" required />
+            <div class="vehicle-btn">
+              <i class="fa-solid fa-truck"></i>
+              <span class="vehicle-name">New Truck</span>
+              <span class="vehicle-desc">Fleet Unit #2</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 2: Driver & Mileage Info -->
+      <section class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-user-clock"></i>
+          2. Trip & Driver Details
+        </div>
+        
+        <div class="form-group">
+          <label for="driverName">Driver's Full Name</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-user input-icon"></i>
+            <input 
+              type="text" 
+              id="driverName" 
+              name="driverName" 
+              class="form-control" 
+              placeholder="e.g. John Smith" 
+              required 
+              autocomplete="name"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="endMileage">Ending Odometer Mileage</label>
+          <div class="input-wrapper">
+            <i class="fa-solid fa-gauge-high input-icon"></i>
+            <input 
+              type="number" 
+              id="endMileage" 
+              name="endMileage" 
+              class="form-control mono" 
+              placeholder="e.g. 142580" 
+              min="0"
+              step="any"
+              required 
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: U-Haul Style Fuel Level Gauge -->
+      <section class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-gas-pump"></i>
+          3. Fuel Level Gauge
+        </div>
+        <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 12px;">
+          Drag the slider to match the fuel needle on the dashboard.
+        </p>
+
+        <div class="fuel-gauge-container">
+          <!-- Visual Bar Display -->
+          <div class="gauge-display">
+            <div class="analog-meter-bar">
+              <div class="meter-fill" id="meterFill" style="width: 50%;"></div>
+            </div>
+            <div class="ticks-container">
+              <span class="tick-label" onclick="setFuel(0)">E</span>
+              <span class="tick-label" onclick="setFuel(0.25)">1/4</span>
+              <span class="tick-label active" onclick="setFuel(0.5)">1/2</span>
+              <span class="tick-label" onclick="setFuel(0.75)">3/4</span>
+              <span class="tick-label" onclick="setFuel(1)">F</span>
+            </div>
+            
+            <div class="fuel-status-badge">
+              <span>Fuel Level:</span>
+              <span class="fraction" id="fuelText">1/2 Tank (50%)</span>
+            </div>
+          </div>
+
+          <!-- Interactive Slider -->
+          <div class="fuel-slider-wrap">
+            <input 
+              type="range" 
+              id="fuelSlider" 
+              name="fuelSlider" 
+              class="fuel-slider" 
+              min="0" 
+              max="100" 
+              value="50" 
+              step="5"
+            />
+            <input type="hidden" id="fuelLevelValue" name="fuelLevel" value="1/2 Tank (50%)" />
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: Return Checklist -->
+      <section class="card">
+        <div class="card-title">
+          <i class="fa-solid fa-list-check"></i>
+          4. Driver Return Checklist
+        </div>
+        
+        <div class="checklist-group">
+          <label class="check-item">
+            <input type="checkbox" name="doors_closed" id="chkDoors" required />
+            <div class="custom-checkbox"><i class="fa-solid fa-check"></i></div>
+            <span class="check-text">All doors & windows are closed</span>
+          </label>
+
+          <label class="check-item">
+            <input type="checkbox" name="truck_locked" id="chkLocked" required />
+            <div class="custom-checkbox"><i class="fa-solid fa-check"></i></div>
+            <span class="check-text">Truck / Van is locked & keys secured</span>
+          </label>
+
+          <label class="check-item">
+            <input type="checkbox" name="electronics_removed" id="chkElectronics" required />
+            <div class="custom-checkbox"><i class="fa-solid fa-check"></i></div>
+            <span class="check-text">Electronics & GPS / devices removed</span>
+          </label>
+
+          <label class="check-item">
+            <input type="checkbox" name="messes_cleaned" id="chkCleaned" required />
+            <div class="custom-checkbox"><i class="fa-solid fa-check"></i></div>
+            <span class="check-text">Cleaned your messes & disposed of trash</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Submit Section -->
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Submit Check-In</span>
+      </button>
+
+    </form>
+  </div>
+
+  <!-- QR Code Modal (Scan poster generator) -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Vehicle QR Code</h3>
+        <p>Print or stick this QR code on the dashboard or key box. Scanning brings drivers directly to this form.</p>
+      </div>
+
+      <div class="qr-box">
+        <canvas id="qrCanvas"></canvas>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-print" onclick="window.print()">
+          <i class="fa-solid fa-print"></i>
+          Print QR Sign
+        </button>
+        <button type="button" class="btn-secondary" id="closeQrBtn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <i class="fa-solid fa-circle-check"></i>
+    <span id="toastMessage">Check-in logged successfully!</span>
+  </div>
+
+  <script>
+    // --- Fuel Slider & U-Haul Style Gauge Logic ---
+    const fuelSlider = document.getElementById('fuelSlider');
+    const meterFill = document.getElementById('meterFill');
+    const fuelText = document.getElementById('fuelText');
+    const fuelLevelValue = document.getElementById('fuelLevelValue');
+    const tickLabels = document.querySelectorAll('.ticks-container .tick-label');
+
+    function updateFuelGauge(val) {
+      val = parseInt(val, 10);
+      meterFill.style.width = val + '%';
+
+      let label = '';
+      if (val === 0) label = 'Empty (0%)';
+      else if (val <= 12) label = 'Nearly Empty (~1/8)';
+      else if (val <= 30) label = '1/4 Tank (' + val + '%)';
+      else if (val <= 45) label = '3/8 Tank (' + val + '%)';
+      else if (val <= 55) label = '1/2 Tank (' + val + '%)';
+      else if (val <= 70) label = '5/8 Tank (' + val + '%)';
+      else if (val <= 85) label = '3/4 Tank (' + val + '%)';
+      else if (val < 100) label = '7/8 Tank (' + val + '%)';
+      else label = 'Full Tank (100%)';
+
+      fuelText.textContent = label;
+      fuelLevelValue.value = label;
+
+      // Highlight nearest tick
+      const ticks = [0, 25, 50, 75, 100];
+      let closestIdx = 0;
+      let minDiff = 100;
+      ticks.forEach((t, i) => {
+        const diff = Math.abs(val - t);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIdx = i;
+        }
+      });
+
+      tickLabels.forEach((el, i) => {
+        if (i === closestIdx) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+    }
+
+    fuelSlider.addEventListener('input', (e) => {
+      updateFuelGauge(e.target.value);
+    });
+
+    window.setFuel = function(fraction) {
+      const val = Math.round(fraction * 100);
+      fuelSlider.value = val;
+      updateFuelGauge(val);
+    };
+
+    // --- Interactive Checkbox Styling ---
+    const checkItems = document.querySelectorAll('.check-item');
+    checkItems.forEach(item => {
+      const chk = item.querySelector('input[type="checkbox"]');
+      chk.addEventListener('change', () => {
+        if (chk.checked) {
+          item.classList.add('checked');
+        } else {
+          item.classList.remove('checked');
+        }
+      });
+    });
+
+    // --- QR Code Generator for Quick Scanning ---
+    const qrModal = document.getElementById('qrModal');
+    const openQrBtn = document.getElementById('openQrBtn');
+    const closeQrBtn = document.getElementById('closeQrBtn');
+    const qrCanvas = document.getElementById('qrCanvas');
+
+    // Generate QR pointing to the current page URL
+    const currentUrl = window.location.href;
+    const qr = new QRious({
+      element: qrCanvas,
+      value: currentUrl,
+      size: 200,
+      level: 'H',
+      foreground: '#0f172a'
+    });
+
+    openQrBtn.addEventListener('click', () => {
+      // Re-render with live URL in case page is hosted
+      qr.set({ value: window.location.href });
+      qrModal.classList.add('active');
+    });
+
+    closeQrBtn.addEventListener('click', () => {
+      qrModal.classList.remove('active');
+    });
+
+    qrModal.addEventListener('click', (e) => {
+      if (e.target === qrModal) qrModal.classList.remove('active');
+    });
+
+    // --- Form Submission & Google Sheets / Webhook Link ---
+    // If you have a Google Apps Script Web App URL, paste it here:
+    const GOOGLE_SCRIPT_WEBHOOK_URL = ""; 
+
+    const form = document.getElementById('vehicleChecklistForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    function showToast(msg) {
+      toastMessage.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const submissionData = {
+        timestamp: new Date().toLocaleString(),
+        vehicle: formData.get('vehicle'),
+        driverName: formData.get('driverName'),
+        endMileage: formData.get('endMileage'),
+        fuelLevel: formData.get('fuelLevel'),
+        doorsClosed: formData.get('doors_closed') ? 'Yes' : 'No',
+        truckLocked: formData.get('truck_locked') ? 'Yes' : 'No',
+        electronicsRemoved: formData.get('electronics_removed') ? 'Yes' : 'No',
+        messesCleaned: formData.get('messes_cleaned') ? 'Yes' : 'No'
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+
+      // Save locally to localStorage so records are never lost
+      const history = JSON.parse(localStorage.getItem('vehicle_checkins') || '[]');
+      history.unshift(submissionData);
+      localStorage.setItem('vehicle_checkins', JSON.stringify(history));
+
+      // If user linked Google Sheets Webhook URL
+      if (GOOGLE_SCRIPT_WEBHOOK_URL && GOOGLE_SCRIPT_WEBHOOK_URL.startsWith('http')) {
+        try {
+          await fetch(GOOGLE_SCRIPT_WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submissionData)
+          });
+        } catch (err) {
+          console.error('Error posting to webhook:', err);
+        }
+      }
+
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Check-In';
+        showToast('Check-in logged for ' + submissionData.driverName + '!');
+        form.reset();
+        // Reset check visuals
+        checkItems.forEach(item => item.classList.remove('checked'));
+        setFuel(0.5);
+      }, 600);
+    });
+  </script>
+</body>
+</html>
