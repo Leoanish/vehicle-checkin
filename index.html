@@ -6,8 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Vehicle Check-In v6</title>
-  <!-- Force cache refresh v6.0 -->
+  <title>Vehicle Check-In</title>
   
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -710,99 +709,68 @@
     }
 
     /* ===================================================
-       PART 1: FULL-SCREEN "KEY DROP CONFIRMATION" GATE
+       MODERN NON-INTRUSIVE SUCCESS & KEY REMINDER BANNER
        =================================================== */
-    .key-gate-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.82);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      z-index: 500;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-
-    .key-gate-backdrop.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .key-gate-card {
-      background: #ffffff;
-      border-radius: 28px;
-      padding: 30px 24px;
-      width: 100%;
-      max-width: 400px;
+    .success-alert-card {
+      display: none;
+      background: #f0fdf4;
+      border: 2px solid #86efac;
+      border-radius: var(--radius-xl);
+      padding: 24px 20px;
+      margin-bottom: 18px;
       text-align: center;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
-      transform: translateY(25px) scale(0.95);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.15);
+      animation: slideInDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .key-gate-backdrop.active .key-gate-card {
-      transform: translateY(0) scale(1);
+    .success-alert-card.show {
+      display: block;
     }
 
-    .key-gate-icon {
-      width: 76px;
-      height: 76px;
+    .success-icon-badge {
+      width: 58px;
+      height: 58px;
+      background: #dcfce7;
+      border: 2px solid #86efac;
+      color: #16a34a;
       border-radius: 50%;
-      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
-      color: #ea580c;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.2rem;
-      margin-bottom: 18px;
-      box-shadow: 0 10px 25px rgba(234, 88, 12, 0.25);
-      animation: keyBounce 2s infinite ease-in-out;
+      font-size: 1.7rem;
+      margin-bottom: 12px;
     }
 
-    @keyframes keyBounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-
-    .key-gate-card h2 {
-      font-size: 1.45rem;
+    .success-alert-card h3 {
+      font-size: 1.3rem;
       font-weight: 800;
       color: #0f172a;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .key-gate-card p {
-      font-size: 0.92rem;
-      color: #475569;
-      line-height: 1.45;
-      margin-bottom: 24px;
-    }
-
-    .btn-key-confirm {
-      width: 100%;
-      height: 54px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      border: none;
-      border-radius: 16px;
-      font-size: 1.05rem;
-      font-weight: 800;
-      cursor: pointer;
+    .key-reminder-highlight {
+      background: #ffffff;
+      border: 1.5px dashed #f59e0b;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
-      transition: transform 0.15s, box-shadow 0.15s;
+      color: #92400e;
+      font-size: 0.95rem;
+      font-weight: 700;
     }
 
-    .btn-key-confirm:active {
-      transform: scale(0.98);
+    .key-reminder-highlight i {
+      color: #f59e0b;
+      font-size: 1.3rem;
+    }
+
+    @keyframes slideInDown {
+      0% { opacity: 0; transform: translateY(-20px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     /* History View & Admin Archive Controls */
@@ -1099,6 +1067,21 @@
       <p>Log ending trip mileage, verify return condition & record fuel level.</p>
     </div>
 
+    <!-- INLINE SUCCESS & KEY DROP-OFF REMINDER BANNER -->
+    <div class="success-alert-card" id="successAlertCard">
+      <div class="success-icon-badge">
+        <i class="fa-solid fa-circle-check"></i>
+      </div>
+      <h3 id="successTitle">Check-In Completed!</h3>
+      <p style="font-size: 0.9rem; color: #475569;" id="successSubtitle">
+        Your vehicle return has been logged successfully.
+      </p>
+      <div class="key-reminder-highlight">
+        <i class="fa-solid fa-key"></i>
+        <span>Please make sure to drop off the keys in their respective place.</span>
+      </div>
+    </div>
+
     <!-- VIEW 1: CHECK-IN FORM -->
     <div id="formView">
       <form id="checkinForm">
@@ -1324,25 +1307,6 @@
 
   </div>
 
-  <!-- ===================================================
-       POST-SUBMISSION KEY DROP-OFF REMINDER GATE
-       =================================================== -->
-  <div class="key-gate-backdrop" id="keyGateModal">
-    <div class="key-gate-card">
-      <div class="key-gate-icon">
-        <i class="fa-solid fa-key"></i>
-      </div>
-      <h2>Key Drop-Off Reminder</h2>
-      <p>
-        Did you drop off the vehicle keys in the <strong>Key Drop Box</strong>? Please deposit them before leaving.
-      </p>
-      <button type="button" class="btn-key-confirm" id="btnConfirmKeys">
-        <i class="fa-solid fa-circle-check"></i>
-        <span>Yes, Keys Dropped Off!</span>
-      </button>
-    </div>
-  </div>
-
   <!-- ADMIN QR MODAL -->
   <div class="admin-modal-backdrop" id="adminQrModal">
     <div class="admin-modal-card">
@@ -1362,7 +1326,7 @@
     </div>
   </div>
 
-  <!-- Toast -->
+  <!-- Toast Notification -->
   <div class="toast" id="toast">
     <i class="fa-solid fa-circle-check fa-lg"></i>
     <span id="toastText">Check-in logged successfully!</span>
@@ -1707,14 +1671,12 @@
       }
     };
 
-    // --- 8. Form Submission & Key Gate Trigger ---
+    // --- 8. Seamless Form Submission & Key Reminder Alert ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
-    const keyGateModal = document.getElementById('keyGateModal');
-    const btnConfirmKeys = document.getElementById('btnConfirmKeys');
-
-    let pendingRecord = null;
+    const successAlertCard = document.getElementById('successAlertCard');
+    const successTitle = document.getElementById('successTitle');
 
     function showToast(msg) {
       toastText.textContent = msg;
@@ -1732,8 +1694,7 @@
       const fuelLevel = fuelText.textContent;
       const remarks = document.getElementById('remarks').value.trim();
 
-      // Stage the record
-      pendingRecord = {
+      const newRecord = {
         id: Date.now(),
         timestampMs: now.getTime(),
         dateString: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
@@ -1744,24 +1705,20 @@
         remarks
       };
 
-      // Open Key Drop-Off Reminder Gate
-      keyGateModal.classList.add('active');
-    });
-
-    // When driver confirms keys are in the box
-    btnConfirmKeys.addEventListener('click', () => {
-      if (!pendingRecord) return;
-
       const records = getStoredRecords();
-      records.unshift(pendingRecord);
+      records.unshift(newRecord);
       localStorage.setItem('fleet_checkins_v3', JSON.stringify(records));
 
-      keyGateModal.classList.remove('active');
       updateBadge();
-      showToast(`Check-in complete for ${pendingRecord.driverName}!`);
 
-      // Reset
-      pendingRecord = null;
+      // Show seamless notification message with key reminder
+      successTitle.textContent = `Check-In Completed (${driverName})!`;
+      successAlertCard.classList.add('show');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      showToast(`Check-in recorded for ${driverName}!`);
+
+      // Reset form
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
