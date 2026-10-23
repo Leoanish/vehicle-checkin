@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-  <!-- jsPDF & html2canvas for PDF report generation -->
+  <!-- html2pdf for framed PDF reports -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -62,7 +62,7 @@
       margin: 0 auto;
     }
 
-    /* Top Tabs */
+    /* Top Navigation Tabs */
     .nav-tabs {
       display: flex;
       background: #e2e8f0;
@@ -341,46 +341,6 @@
       background: #f1f5f9;
       color: #64748b;
       cursor: default;
-    }
-
-    /* Pill Radios */
-    .pill-radio-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .pill-radio {
-      position: relative;
-    }
-
-    .pill-radio input {
-      position: absolute;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .pill-label {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 12px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-md);
-      background: var(--surface-subtle);
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #475569;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .pill-radio input:checked + .pill-label {
-      border-color: var(--primary);
-      background: #eff6ff;
-      color: var(--primary-dark);
-      font-weight: 800;
     }
 
     /* ===================================================
@@ -748,9 +708,105 @@
       transform: translateY(0);
     }
 
+    /* ===================================================
+       PART 1: FULL-SCREEN "KEY DROP CONFIRMATION" GATE
+       =================================================== */
+    .key-gate-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .key-gate-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .key-gate-card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.5);
+      transform: translateY(25px) scale(0.95);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .key-gate-backdrop.active .key-gate-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .key-gate-icon {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+      color: #ea580c;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 25px rgba(234, 88, 12, 0.25);
+      animation: keyBounce 2s infinite ease-in-out;
+    }
+
+    @keyframes keyBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .key-gate-card h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+
+    .key-gate-card p {
+      font-size: 0.92rem;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 24px;
+    }
+
+    .btn-key-confirm {
+      width: 100%;
+      height: 54px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn-key-confirm:active {
+      transform: scale(0.98);
+    }
+
     /* History View & Admin Archive Controls */
     .admin-history-toolbar {
-      display: none; /* Only shown if isAdmin */
+      display: none;
       background: #ffffff;
       border: 1.5px solid #cbd5e1;
       border-radius: var(--radius-lg);
@@ -888,7 +944,6 @@
       line-height: 1.4;
     }
 
-    /* History Empty or Locked Note */
     .history-locked-note {
       text-align: center;
       padding: 14px;
@@ -981,7 +1036,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      z-index: 200;
+      z-index: 600;
       transform: translateY(120px);
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: 0 12px 30px rgba(0,0,0,0.35);
@@ -1033,7 +1088,6 @@
           <i class="fa-solid fa-shield-halved"></i> Return Checklist
         </div>
 
-        <!-- Only visible when opened with ?admin=true -->
         <button type="button" class="admin-pill-badge" id="adminQrBtn" onclick="openAdminQrModal()">
           <i class="fa-solid fa-qrcode"></i> Admin QR
         </button>
@@ -1102,28 +1156,9 @@
               <input type="number" id="endMileage" class="form-input mono" placeholder="e.g. 142580" required min="0" step="any" />
             </div>
           </div>
-
-          <!-- Key Return Check -->
-          <div class="form-group" style="margin-top: 14px;">
-            <label class="field-label">Vehicle Key Returned To</label>
-            <div class="pill-radio-group">
-              <label class="pill-radio">
-                <input type="radio" name="keyLocation" value="Key Drop Box" checked />
-                <div class="pill-label">
-                  <i class="fa-solid fa-box-archive"></i> Key Drop Box
-                </div>
-              </label>
-              <label class="pill-radio">
-                <input type="radio" name="keyLocation" value="Manager / Office" />
-                <div class="pill-label">
-                  <i class="fa-solid fa-user-tie"></i> Handed to Office
-                </div>
-              </label>
-            </div>
-          </div>
         </div>
 
-        <!-- 3. Fuel Meter (AutoMeter style labeled "FUEL METER") -->
+        <!-- 3. Fuel Meter -->
         <div class="card">
           <div class="card-title">
             <i class="fa-solid fa-gas-pump"></i> 3. Fuel Level Gauge
@@ -1161,12 +1196,10 @@
               </div>
             </div>
 
-            <!-- Touch Slider -->
             <div class="slider-box">
               <input type="range" id="fuelSlider" class="fluid-slider" min="0" max="100" value="50" step="1" />
             </div>
 
-            <!-- Quick Jumps -->
             <div class="gauge-ticks">
               <span onclick="setFuel(0)">E</span>
               <span onclick="setFuel(0.25)">1/4</span>
@@ -1175,14 +1208,12 @@
               <span onclick="setFuel(1)">F</span>
             </div>
 
-            <!-- Value Readout Pill -->
             <div class="fuel-readout-pill">
               <i class="fa-solid fa-oil-can" id="fuelIcon" style="color: #f59e0b;"></i>
               <span>Fuel Left:</span>
               <span class="fuel-val" id="fuelText" style="color: #f59e0b;">1/2 Tank (50%)</span>
             </div>
 
-            <!-- Low Fuel Warning Notice (< 1/4) -->
             <div class="fuel-warning-notice" id="fuelWarningNotice">
               <div class="warning-icon">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -1253,7 +1284,7 @@
     <!-- VIEW 2: LOGGED HISTORY -->
     <div id="historyView" style="display: none;">
       
-      <!-- ADMIN CONTROLS (Only visible in ?admin=true) -->
+      <!-- ADMIN TOOLBAR -->
       <div class="admin-history-toolbar" id="adminHistoryToolbar">
         <div class="toolbar-title">
           <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Archive & Export</span>
@@ -1281,7 +1312,6 @@
         </div>
       </div>
 
-      <!-- History List (Framed for both screen & PDF output) -->
       <div id="pdfExportContainer">
         <div id="historyList"></div>
       </div>
@@ -1291,6 +1321,25 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ===================================================
+       POST-SUBMISSION KEY DROP-OFF REMINDER GATE
+       =================================================== -->
+  <div class="key-gate-backdrop" id="keyGateModal">
+    <div class="key-gate-card">
+      <div class="key-gate-icon">
+        <i class="fa-solid fa-key"></i>
+      </div>
+      <h2>Key Drop-Off Reminder</h2>
+      <p>
+        Did you drop off the vehicle keys in the <strong>Key Drop Box</strong>? Please deposit them before leaving.
+      </p>
+      <button type="button" class="btn-key-confirm" id="btnConfirmKeys">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Yes, Keys Dropped Off!</span>
+      </button>
+    </div>
   </div>
 
   <!-- ADMIN QR MODAL -->
@@ -1327,7 +1376,6 @@
     const adminQrModal = document.getElementById('adminQrModal');
     const qrCanvas = document.getElementById('qrCanvas');
 
-    // Clean scan URL for drivers
     const cleanScanUrl = window.location.origin + window.location.pathname;
     const qr = new QRious({
       element: qrCanvas,
@@ -1375,7 +1423,7 @@
     updateAutoDate();
     setInterval(updateAutoDate, 30000);
 
-    // --- 3. Fuel Meter (AutoMeter style labeled "FUEL METER") ---
+    // --- 3. Fuel Meter ---
     const fuelSlider = document.getElementById('fuelSlider');
     const gaugeNeedle = document.getElementById('gaugeNeedle');
     const fuelText = document.getElementById('fuelText');
@@ -1389,7 +1437,6 @@
       const angle = -65 + (val / 100) * 130;
       gaugeNeedle.style.transform = `translate(-50%, -86px) rotate(${angle}deg)`;
 
-      // Dynamic Gradient Color calculation (Red -> Amber -> Green)
       let r, g, b;
       if (val < 50) {
         const ratio = val / 50;
@@ -1422,14 +1469,12 @@
 
       fuelText.textContent = label;
 
-      // RED WARNING NOTICE (< 1/4)
       if (val < 25) {
         warningNotice.classList.add('visible');
       } else {
         warningNotice.classList.remove('visible');
       }
 
-      // Nearest Tick active class
       const ticks = [0, 25, 50, 75, 100];
       let bestIdx = 0;
       let minDiff = 100;
@@ -1509,7 +1554,6 @@
           <div class="history-chips">
             <span class="history-chip"><i class="fa-solid fa-gauge-high"></i> ${r.endMileage} mi</span>
             <span class="history-chip"><i class="fa-solid fa-gas-pump"></i> ${r.fuelLevel}</span>
-            <span class="history-chip"><i class="fa-solid fa-key"></i> ${r.keyLocation || 'Drop Box'}</span>
             <span class="history-chip" style="color: #059669; background: #ecfdf5;"><i class="fa-solid fa-check-double"></i> Complete</span>
           </div>
           ${r.remarks ? `<div class="history-remarks-box"><i class="fa-solid fa-quote-left" style="opacity: 0.6; margin-right: 4px;"></i>${r.remarks}</div>` : ''}
@@ -1543,12 +1587,10 @@
         return;
       }
 
-      if (confirm(`Archive ${toArchive.length} record(s) between ${fromVal} and ${toVal}? (Archived records will be exported and stored safely in your archived storage).`)) {
-        // Save to archive storage
+      if (confirm(`Archive ${toArchive.length} record(s) between ${fromVal} and ${toVal}?`)) {
         const currentArchived = JSON.parse(localStorage.getItem('fleet_archived_records') || '[]');
         localStorage.setItem('fleet_archived_records', JSON.stringify(currentArchived.concat(toArchive)));
 
-        // Remove from active records
         const remaining = records.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
         localStorage.setItem('fleet_checkins_v3', JSON.stringify(remaining));
 
@@ -1584,7 +1626,6 @@
 
       showToast('Generating framed PDF report...');
 
-      // Build dedicated clean printable frame for PDF
       const pdfWrapper = document.createElement('div');
       pdfWrapper.style.padding = '24px';
       pdfWrapper.style.fontFamily = "'Plus Jakarta Sans', sans-serif";
@@ -1619,7 +1660,6 @@
               <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700;">
                 <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Mileage: ${r.endMileage} mi</span>
                 <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Fuel: ${r.fuelLevel}</span>
-                <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 6px; color: #334155;">Key: ${r.keyLocation || 'Drop Box'}</span>
                 <span style="background: #dcfce7; color: #15803d; padding: 3px 8px; border-radius: 6px;">Checklist: Complete</span>
               </div>
               ${r.remarks ? `
@@ -1666,10 +1706,14 @@
       }
     };
 
-    // --- 8. Form Submission ---
+    // --- 8. Form Submission & Key Gate Trigger ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
+    const keyGateModal = document.getElementById('keyGateModal');
+    const btnConfirmKeys = document.getElementById('btnConfirmKeys');
+
+    let pendingRecord = null;
 
     function showToast(msg) {
       toastText.textContent = msg;
@@ -1684,29 +1728,39 @@
       const vehicle = document.querySelector('input[name="vehicle"]:checked').value;
       const driverName = document.getElementById('driverName').value.trim();
       const endMileage = document.getElementById('endMileage').value.trim();
-      const keyLocation = document.querySelector('input[name="keyLocation"]:checked').value;
       const fuelLevel = fuelText.textContent;
       const remarks = document.getElementById('remarks').value.trim();
 
-      const newRecord = {
+      // Stage the record
+      pendingRecord = {
         id: Date.now(),
         timestampMs: now.getTime(),
         dateString: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
         vehicle,
         driverName,
         endMileage,
-        keyLocation,
         fuelLevel,
         remarks
       };
 
+      // Open Key Drop-Off Reminder Gate
+      keyGateModal.classList.add('active');
+    });
+
+    // When driver confirms keys are in the box
+    btnConfirmKeys.addEventListener('click', () => {
+      if (!pendingRecord) return;
+
       const records = getStoredRecords();
-      records.unshift(newRecord);
+      records.unshift(pendingRecord);
       localStorage.setItem('fleet_checkins_v3', JSON.stringify(records));
 
+      keyGateModal.classList.remove('active');
       updateBadge();
-      showToast(`Check-in recorded for ${driverName}!`);
+      showToast(`Check-in complete for ${pendingRecord.driverName}!`);
 
+      // Reset
+      pendingRecord = null;
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
