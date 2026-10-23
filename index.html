@@ -769,7 +769,7 @@
       100% { opacity: 1; transform: translateY(0); }
     }
 
-    /* Admin History & Batch Actions Toolbar */
+    /* Admin History Toolbar & Batch Controls */
     .admin-history-toolbar {
       display: none;
       background: #ffffff;
@@ -841,7 +841,6 @@
       color: var(--primary-dark);
     }
 
-    /* Batch Selection Bar (Admin Mode) */
     .admin-batch-bar {
       display: flex;
       align-items: center;
@@ -1341,8 +1340,8 @@
       <!-- ADMIN TOOLBAR -->
       <div class="admin-history-toolbar" id="adminHistoryToolbar">
         <div class="toolbar-title">
-          <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Management Controls</span>
-          <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Cloud Synced</span>
+          <span><i class="fa-solid fa-sliders" style="color: var(--primary);"></i> Admin Cloud Sync Controls</span>
+          <span style="font-size: 0.72rem; color: #10b981; font-weight: 800; background: #ecfdf5; padding: 2px 8px; border-radius: 10px;">Firebase Live</span>
         </div>
 
         <div class="date-filter-grid">
@@ -1382,7 +1381,7 @@
       </div>
 
       <div class="history-locked-note">
-        <i class="fa-solid fa-cloud"></i> All records are synced live across all devices & stored safely.
+        <i class="fa-solid fa-cloud"></i> Synced in real-time across all drivers & devices via Firebase Cloud.
       </div>
     </div>
 
@@ -1415,10 +1414,9 @@
 
   <script>
     // =========================================================================
-    // GOOGLE SHEETS LIVE CLOUD SYNC CONFIGURATION
-    // Paste your Google Apps Script Web App URL below:
+    // FIREBASE REALTIME CLOUD DATABASE CONFIGURATION
     // =========================================================================
-    const GOOGLE_SCRIPT_URL = ""; 
+    const FIREBASE_DB_URL = "https://vehicle-checkin-d1583-default-rtdb.firebaseio.com/checkins";
 
     // --- 1. Admin Detection (?admin=true) ---
     const urlParams = new URLSearchParams(window.location.search);
@@ -1559,47 +1557,45 @@
       });
     });
 
-    // --- 5. Data Fetching (Cloud Google Sheets + Local Fallback) ---
+    // --- 5. Firebase Realtime Cloud Synchronization ---
     let currentRecordsCache = [];
 
-    function getLocalRecords() {
-      try {
-        const list = JSON.parse(localStorage.getItem('fleet_checkins_cloud_v1') || '[]');
-        list.sort((a, b) => b.timestampMs - a.timestampMs);
-        return list;
-      } catch {
-        return [];
-      }
-    }
-
-    function saveLocalRecords(list) {
-      localStorage.setItem('fleet_checkins_cloud_v1', JSON.stringify(list));
-      currentRecordsCache = list;
-      updateBadge();
-      renderHistory();
-    }
-
     async function fetchCloudRecords() {
-      if (!GOOGLE_SCRIPT_URL) {
-        currentRecordsCache = getLocalRecords();
-        updateBadge();
-        renderHistory();
-        return;
-      }
-
       try {
-        const res = await fetch(GOOGLE_SCRIPT_URL);
-        const json = await res.json();
-        if (json.status === 'success' && Array.isArray(json.data)) {
-          currentRecordsCache = json.data;
-          // Sync to local as offline cache
-          localStorage.setItem('fleet_checkins_cloud_v1', JSON.stringify(currentRecordsCache));
-        } else {
-          currentRecordsCache = getLocalRecords();
+        const res = await fetch(`${FIREBASE_DB_URL}.json`);
+        const data = await res.json();
+        
+        const list = [];
+        if (data && typeof data === 'object') {
+          Object.keys(data).forEach(firebaseKey => {
+            const item = data[firebaseKey];
+            if (item) {
+              list.push({
+                firebaseKey: firebaseKey,
+                id: item.id || firebaseKey,
+                timestampMs: item.timestampMs || 0,
+                dateString: item.dateString || "",
+                vehicle: item.vehicle || "",
+                driverName: item.driverName || "",
+                endMileage: item.endMileage || "",
+                fuelLevel: item.fuelLevel || "",
+                remarks: item.remarks || ""
+              });
+            }
+          });
         }
+        
+        // Sort descending (newest check-ins first)
+        list.sort((a, b) => b.timestampMs - a.timestampMs);
+        currentRecordsCache = list;
+        localStorage.setItem('fleet_checkins_cache', JSON.stringify(list));
       } catch (err) {
-        console.warn('Could not reach Google Sheets, using cached records:', err);
-        currentRecordsCache = getLocalRecords();
+        console.warn('Network error reaching Firebase, loading cached:', err);
+        try {
+          currentRecordsCache = JSON.parse(localStorage.getItem('fleet_checkins_cache') || '[]');
+        } catch {
+          currentRecordsCache = [];
+        }
       }
       updateBadge();
       renderHistory();
@@ -1617,7 +1613,7 @@
           <div style="text-align: center; padding: 45px 20px; color: #94a3b8;">
             <i class="fa-solid fa-clipboard-list" style="font-size: 3rem; margin-bottom: 12px; color: #cbd5e1;"></i>
             <p><strong>No check-ins recorded yet</strong></p>
-            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins from any device will appear here.</p>
+            <p style="font-size: 0.8rem; margin-top: 4px;">Completed check-ins from any device will appear here live.</p>
           </div>
         `;
         syncBatchDeleteState();
@@ -1629,7 +1625,7 @@
           <div class="history-top-row">
             <div style="display: flex; align-items: center; gap: 8px;">
               ${isAdmin ? `
-                <input type="checkbox" class="admin-card-checkbox" value="${r.id}" onchange="updateSelectedCount()" style="display: inline-block;" />
+                <input type="checkbox" class="admin-card-checkbox" value="${r.firebaseKey || r.id}" onchange="updateSelectedCount()" style="display: inline-block;" />
               ` : ''}
               <span class="history-veh-badge">
                 <i class="fa-solid ${r.vehicle === 'Old Van' ? 'fa-van-shuttle' : 'fa-truck'}" style="color: var(--primary);"></i>
@@ -1640,7 +1636,7 @@
             <div class="history-right-meta">
               <span class="history-timestamp">${r.dateString}</span>
               ${isAdmin ? `
-                <button type="button" class="admin-del-btn" onclick="deleteSingleRecord(${r.id})" title="Delete record" style="display: inline-flex;">
+                <button type="button" class="admin-del-btn" onclick="deleteSingleRecord('${r.firebaseKey || r.id}', '${r.driverName}')" title="Delete record" style="display: inline-flex;">
                   <i class="fa-solid fa-trash"></i>
                 </button>
               ` : ''}
@@ -1663,30 +1659,16 @@
       syncBatchDeleteState();
     }
 
-    // --- 6. Admin Powers: Delete Single, Batch Delete, & Archive ---
-    async function sendDeleteRequestToCloud(ids) {
-      if (!GOOGLE_SCRIPT_URL) return;
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', ids: ids })
-        });
-      } catch (e) {
-        console.error('Error sending delete to cloud:', e);
-      }
-    }
-
-    window.deleteSingleRecord = function(id) {
-      const target = currentRecordsCache.find(r => r.id === id);
-      if (!target) return;
-
-      if (confirm(`Admin Action: Permanently delete check-in for "${target.driverName}" (${target.vehicle})?`)) {
-        const remaining = currentRecordsCache.filter(r => r.id !== id);
-        saveLocalRecords(remaining);
-        sendDeleteRequestToCloud([id]);
-        showToast('Record deleted.');
+    // --- 6. Admin Powers: Delete Single, Batch Delete, & Archive (Synced to Cloud) ---
+    window.deleteSingleRecord = async function(key, driverName) {
+      if (confirm(`Admin Action: Permanently delete check-in for "${driverName}"?`)) {
+        try {
+          await fetch(`${FIREBASE_DB_URL}/${key}.json`, { method: 'DELETE' });
+          showToast('Record deleted from cloud.');
+          fetchCloudRecords();
+        } catch (e) {
+          alert('Error deleting from cloud: ' + e);
+        }
       }
     };
 
@@ -1694,7 +1676,7 @@
       const checkboxes = document.querySelectorAll('.admin-card-checkbox');
       checkboxes.forEach(cb => {
         cb.checked = checked;
-        const card = document.getElementById('card-' + cb.value);
+        const card = cb.closest('.history-card');
         if (card) {
           card.classList.toggle('selected-for-delete', checked);
         }
@@ -1709,7 +1691,7 @@
       const deleteBtn = document.getElementById('btnBatchDelete');
 
       document.querySelectorAll('.admin-card-checkbox').forEach(cb => {
-        const card = document.getElementById('card-' + cb.value);
+        const card = cb.closest('.history-card');
         if (card) {
           card.classList.toggle('selected-for-delete', cb.checked);
         }
@@ -1725,17 +1707,21 @@
       updateSelectedCount();
     }
 
-    window.deleteSelected = function() {
+    window.deleteSelected = async function() {
       const checkboxes = Array.from(document.querySelectorAll('.admin-card-checkbox:checked'));
-      const idsToDelete = checkboxes.map(cb => parseInt(cb.value, 10));
+      const keysToDelete = checkboxes.map(cb => cb.value);
 
-      if (idsToDelete.length === 0) return;
+      if (keysToDelete.length === 0) return;
 
-      if (confirm(`Admin Action: Permanently delete ${idsToDelete.length} selected record(s)?`)) {
-        const remaining = currentRecordsCache.filter(r => !idsToDelete.includes(r.id));
-        saveLocalRecords(remaining);
-        sendDeleteRequestToCloud(idsToDelete);
-        showToast(`Deleted ${idsToDelete.length} record(s).`);
+      if (confirm(`Admin Action: Permanently delete ${keysToDelete.length} selected record(s) from Firebase cloud?`)) {
+        showToast('Deleting records...');
+        try {
+          await Promise.all(keysToDelete.map(key => fetch(`${FIREBASE_DB_URL}/${key}.json`, { method: 'DELETE' })));
+          showToast(`Deleted ${keysToDelete.length} record(s).`);
+          fetchCloudRecords();
+        } catch (e) {
+          alert('Error deleting records: ' + e);
+        }
       }
     };
 
@@ -1767,8 +1753,6 @@
         const currentArchived = JSON.parse(localStorage.getItem('fleet_archived_records') || '[]');
         localStorage.setItem('fleet_archived_records', JSON.stringify(currentArchived.concat(toArchive)));
 
-        const remaining = currentRecordsCache.filter(r => r.timestampMs < fromTime || r.timestampMs > toTime);
-        saveLocalRecords(remaining);
         showToast(`Archived ${toArchive.length} record(s) successfully!`);
       }
     };
@@ -1878,7 +1862,7 @@
       }
     };
 
-    // --- 8. Seamless Form Submission (Posts to Cloud + Shows Key Reminder) ---
+    // --- 8. Seamless Form Submission (Posts directly to Firebase Realtime DB) ---
     const form = document.getElementById('checkinForm');
     const toast = document.getElementById('toast');
     const toastText = document.getElementById('toastText');
@@ -1912,38 +1896,37 @@
         remarks
       };
 
-      // Save locally
-      currentRecordsCache.unshift(newRecord);
-      saveLocalRecords(currentRecordsCache);
-
-      // Post to Google Sheets
-      if (GOOGLE_SCRIPT_URL) {
-        try {
-          fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'add', record: newRecord })
-          });
-        } catch (err) {
-          console.error('Error posting to cloud:', err);
-        }
+      // 1. Post to Firebase Realtime Database
+      try {
+        await fetch(`${FIREBASE_DB_URL}.json`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newRecord)
+        });
+      } catch (err) {
+        console.error('Error syncing to Firebase:', err);
       }
 
+      // 2. Show instant confirmation & key drop reminder banner
       successTitle.textContent = `Check-In Completed (${driverName})!`;
       successAlertCard.classList.add('show');
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       showToast(`Check-in recorded for ${driverName}!`);
 
+      // 3. Reset form
       form.reset();
       checkCards.forEach(c => c.classList.remove('checked'));
       setFuel(0.5);
       updateAutoDate();
+
+      // Refresh cloud data
+      fetchCloudRecords();
     });
 
-    // Initial load
+    // Auto-poll Firebase every 10 seconds for real-time live sync
     fetchCloudRecords();
+    setInterval(fetchCloudRecords, 10000);
   </script>
 </body>
 </html>
